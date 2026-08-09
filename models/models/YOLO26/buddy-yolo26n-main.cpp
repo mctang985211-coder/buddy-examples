@@ -89,22 +89,6 @@ void loadParameters(const std::string &paramFilePath,
             << std::endl;
 }
 
-std::string getBuildDir() {
-#ifdef YOLO26_EXAMPLE_BUILD_PATH
-  return YOLO26_EXAMPLE_BUILD_PATH;
-#else
-  return ".";
-#endif
-}
-
-std::string getExampleDir() {
-#ifdef YOLO26_EXAMPLE_PATH
-  return YOLO26_EXAMPLE_PATH;
-#else
-  return ".";
-#endif
-}
-
 std::vector<std::string> loadLabels(const std::string &labelsFilePath) {
   std::ifstream labelsFile(labelsFilePath);
   if (!labelsFile.is_open()) {
@@ -197,17 +181,10 @@ int main(int argc, char **argv) {
   const std::string title = "YOLO26n Inference Powered by Buddy Compiler";
   std::cout << "\033[33;1m" << title << "\033[0m" << std::endl;
 
-  if (argc < 2) {
-    std::cerr << "Usage: " << argv[0]
-              << " <image_path(.bmp preferred)> [arg0.data path]" << std::endl;
-    return 1;
-  }
-
-  const std::string imagePath = argv[1];
-  const std::string paramsPath =
-      argc >= 3 ? argv[2] : getBuildDir() + "/arg0.data";
-  const std::vector<std::string> labels =
-      loadLabels(getExampleDir() + "/labels.txt");
+  const std::string imagePath =
+      argc >= 2 ? argv[1] : "images/bus_16bit.bmp";
+  const std::string paramsPath = argc >= 3 ? argv[2] : "arg0.data";
+  const std::vector<std::string> labels = loadLabels("labels.txt");
   std::string imageExt = std::filesystem::path(imagePath).extension().string();
   std::transform(imageExt.begin(), imageExt.end(), imageExt.begin(),
                  [](unsigned char c) { return std::tolower(c); });

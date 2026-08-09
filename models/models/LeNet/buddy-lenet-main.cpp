@@ -147,5 +147,13 @@ int main() {
   std::cout << "Classification: " << maxIdx << std::endl;
   std::cout << "Probability: " << maxVal << std::endl;
 
+  // images/8.bmp must classify as digit 8; wrong label means DMA/CoW or model bug.
+  constexpr int expect = 8;
+  if (static_cast<int>(maxIdx) != expect) {
+    std::cerr << "FAIL expected classification " << expect << ", got " << maxIdx
+              << std::endl;
+    return 1;
+  }
+  std::cout << "PASS classification=" << maxIdx << std::endl;
   return 0;
 }

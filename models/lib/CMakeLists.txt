@@ -15,12 +15,15 @@ set(DIP_MLIR_PATH ${BUDDY_MLIR_DIR}/frontend/Interfaces/lib/DIP.mlir)
 
 # Find CRunnerUtils.cpp in models directory (assuming ResNet18 as template)
 set(CRUNNER_UTILS_SRC ${MODELTEST_LIB_DIR}/CRunnerUtils.cpp)
+set(BBHW_MEM_C ${WORKLOAD_LIB_DIR}/bbhw/mem/mem.c)
 
-add_library(ModelTestCRunnerUtils STATIC ${CRUNNER_UTILS_SRC})
+add_library(ModelTestCRunnerUtils STATIC ${CRUNNER_UTILS_SRC} ${BBHW_MEM_C})
 
 target_include_directories(ModelTestCRunnerUtils
   PUBLIC
   ${LLVM_MLIR_EXECUTION_ENGINE_DIR}
+  ${WORKLOAD_LIB_DIR}
+  ${WORKLOAD_LIB_DIR}/bbhw/mem
 )
 
 add_library(ModelTestHostCRunnerUtils OBJECT ${CRUNNER_UTILS_SRC})
