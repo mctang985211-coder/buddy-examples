@@ -48,7 +48,7 @@ add_custom_command(
             -convert-tensor-to-linalg
             -one-shot-bufferize="bufferize-function-boundaries"
             -convert-linalg-to-tile
-            -convert-tile-to-buckyball
+            ${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
             -batchmatmul-optimize
             > subgraph0_loops.mlir
   COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${MODEL_BERT_DIR}/subgraph0.mlir
@@ -59,10 +59,10 @@ add_custom_command(
             -convert-tensor-to-linalg
             -one-shot-bufferize="bufferize-function-boundaries"
             -convert-linalg-to-tile
-            -convert-tile-to-buckyball
+            ${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
             -batchmatmul-optimize
             -lower-buckyball-to-bank-ssa
-            -assign-physical-banks
+            ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
             ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
             ${BUCKYBALL_LOWER_BUCKYBALL}
             > subgraph0_buckyball.mlir
@@ -74,10 +74,10 @@ add_custom_command(
             -convert-tensor-to-linalg
             -one-shot-bufferize="bufferize-function-boundaries"
             -convert-linalg-to-tile
-            -convert-tile-to-buckyball
+            ${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
             -batchmatmul-optimize
             -lower-buckyball-to-bank-ssa
-            -assign-physical-banks
+            ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
             -llvm-request-c-wrappers
             ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
             -convert-trace-to-llvm="cycle-trace"
@@ -105,10 +105,10 @@ add_custom_command(
             -convert-tensor-to-linalg
             -one-shot-bufferize="bufferize-function-boundaries"
             -convert-linalg-to-tile
-            -convert-tile-to-buckyball
+            ${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
             -batchmatmul-optimize
             -lower-buckyball-to-bank-ssa
-            -assign-physical-banks
+            ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
             -llvm-request-c-wrappers
             ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
             -convert-trace-to-llvm="cycle-trace"
@@ -132,7 +132,65 @@ add_custom_command(
   COMMENT "Building subgraph.o "
   VERBATIM)
 
-add_library(BuckyballBERT STATIC forward.o subgraph0.o)
+math(EXPR BERT_LAST_CORE "${BERT_CORE_COUNT} - 1")
+set(BERT_EXTRA_SUBGRAPH_OBJECTS)
+
+function(add_bert_subgraph CORE_ID)
+  add_custom_command(
+    OUTPUT subgraph${CORE_ID}.o
+    COMMAND ${BUDDY_BINARY_DIR}/buddy-opt
+              ${MODEL_BERT_DIR}/subgraph${CORE_ID}.mlir
+              -pass-pipeline
+              "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
+            ${BUDDY_BINARY_DIR}/buddy-opt
+              -eliminate-empty-tensors
+              -convert-elementwise-to-linalg
+              -convert-tensor-to-linalg
+              -one-shot-bufferize="bufferize-function-boundaries"
+              -convert-linalg-to-tile
+              ${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
+              -batchmatmul-optimize
+              -lower-buckyball-to-bank-ssa
+              ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
+              -llvm-request-c-wrappers
+              ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
+              -convert-trace-to-llvm="cycle-trace"
+              -expand-strided-metadata
+              -convert-linalg-to-loops
+              ${BUCKYBALL_LOWER_BUCKYBALL}
+              -lower-affine
+              -convert-scf-to-cf
+              -convert-cf-to-llvm
+              -buffer-deallocation-simplification
+              -bufferization-lower-deallocations
+              -convert-math-to-llvm
+              -convert-math-to-libm
+              -convert-arith-to-llvm
+              -convert-func-to-llvm
+              -finalize-memref-to-llvm
+              -reconcile-unrealized-casts |
+            ${BUDDY_BINARY_DIR}/buddy-translate --buddy-to-llvmir |
+            ${BUDDY_BINARY_DIR}/buddy-llc
+              -filetype=obj -mtriple=riscv64 -O2
+              -mattr=${BUCKYBALL_RISCV_MATTR} -float-abi=hard
+              -o subgraph${CORE_ID}.o
+    DEPENDS ${MODEL_BERT_DIR}/subgraph${CORE_ID}.mlir
+    COMMENT "Building BERT subgraph ${CORE_ID}.o"
+    VERBATIM)
+endfunction()
+
+if(BERT_CORE_COUNT GREATER 1)
+  foreach(BERT_CORE RANGE 1 ${BERT_LAST_CORE})
+    add_bert_subgraph(${BERT_CORE})
+    list(APPEND BERT_EXTRA_SUBGRAPH_OBJECTS subgraph${BERT_CORE}.o)
+  endforeach()
+endif()
+
+add_library(BuckyballBERT STATIC
+  forward.o
+  subgraph0.o
+  ${BERT_EXTRA_SUBGRAPH_OBJECTS}
+)
 set_target_properties(BuckyballBERT PROPERTIES LINKER_LANGUAGE CXX)
 add_dependencies(BuckyballBERT bert-model-build)
 add_executable(buddy-buckyball-bert-run ${MODEL_BERT_DIR}/bert-main.cpp)

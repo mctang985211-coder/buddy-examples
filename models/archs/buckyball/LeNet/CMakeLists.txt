@@ -52,7 +52,7 @@ add_custom_command(
             -convert-tensor-to-linalg
             -one-shot-bufferize="bufferize-function-boundaries"
             -convert-linalg-to-tile
-            -convert-tile-to-buckyball
+${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
             -extend-trace-to-buckyball
             -batchmatmul-optimize
             > subgraph0_loops.mlir
@@ -64,10 +64,10 @@ add_custom_command(
             -convert-tensor-to-linalg
             -one-shot-bufferize="bufferize-function-boundaries"
             -convert-linalg-to-tile
-            -convert-tile-to-buckyball
+${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
             -extend-trace-to-buckyball
             -lower-buckyball-to-bank-ssa
-            "--assign-physical-banks=bank_num=${BUCKYBALL_MLIR_BANK_NUM}"
+            ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
             ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
             ${BUCKYBALL_LOWER_BUCKYBALL}
             > subgraph0_buckyball.mlir
@@ -78,10 +78,10 @@ add_custom_command(
             -eliminate-empty-tensors
             -one-shot-bufferize="bufferize-function-boundaries"
             -convert-linalg-to-tile
-            -convert-tile-to-buckyball
+${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
             -extend-trace-to-buckyball
             -lower-buckyball-to-bank-ssa
-            "--assign-physical-banks=bank_num=${BUCKYBALL_MLIR_BANK_NUM}"
+            ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
             ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
             -convert-trace-to-llvm="cycle-trace"
             -expand-strided-metadata
@@ -106,10 +106,10 @@ add_custom_command(
           -eliminate-empty-tensors
           -one-shot-bufferize="bufferize-function-boundaries"
           -convert-linalg-to-tile
-          -convert-tile-to-buckyball
+${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
           -extend-trace-to-buckyball
           -lower-buckyball-to-bank-ssa
-          "--assign-physical-banks=bank_num=${BUCKYBALL_MLIR_BANK_NUM}"
+          ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
           -llvm-request-c-wrappers
           ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
           -convert-trace-to-llvm="cycle-trace"

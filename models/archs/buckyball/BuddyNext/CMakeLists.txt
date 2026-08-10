@@ -27,7 +27,7 @@ function(add_buddynext_buckyball_target target_name mlir_file object_name mlir_b
               -convert-tensor-to-linalg
               -one-shot-bufferize="bufferize-function-boundaries"
               -convert-linalg-to-tile
-              -convert-tile-to-buckyball
+${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
               > ${mlir_base_sanitized}_buckyball.mlir
     # Stage 3: compile to object
     COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${mlir_file}
@@ -39,9 +39,9 @@ function(add_buddynext_buckyball_target target_name mlir_file object_name mlir_b
               -convert-tensor-to-linalg
               -one-shot-bufferize="bufferize-function-boundaries"
               -convert-linalg-to-tile
-              -convert-tile-to-buckyball
+${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
               -lower-buckyball-to-bank-ssa
-              -assign-physical-banks
+${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
               -llvm-request-c-wrappers
               ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
               -convert-trace-to-llvm="cycle-trace"

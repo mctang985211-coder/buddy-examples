@@ -44,7 +44,7 @@ add_custom_command(
             -convert-tensor-to-linalg
             -one-shot-bufferize="bufferize-function-boundaries"
             -convert-linalg-to-tile
-            -convert-tile-to-buckyball
+${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
             -batchmatmul-optimize
             > subgraph0_loops.mlir
   COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${MODEL_MOBILENETV3_DIR}/subgraph0.mlir
@@ -55,9 +55,9 @@ add_custom_command(
             -convert-tensor-to-linalg
             -one-shot-bufferize="bufferize-function-boundaries"
             -convert-linalg-to-tile
-            -convert-tile-to-buckyball
+${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
             -lower-buckyball-to-bank-ssa
-            -assign-physical-banks
+${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
             ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
             ${BUCKYBALL_LOWER_BUCKYBALL}
             > subgraph0_buckyball.mlir
@@ -69,9 +69,9 @@ add_custom_command(
             -convert-tensor-to-linalg
             -one-shot-bufferize="bufferize-function-boundaries"
             -convert-linalg-to-tile
-            -convert-tile-to-buckyball
+${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
             -lower-buckyball-to-bank-ssa
-            -assign-physical-banks
+${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
             -llvm-request-c-wrappers
             ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
             -convert-trace-to-llvm="cycle-trace"
@@ -99,9 +99,9 @@ add_custom_command(
           -convert-tensor-to-linalg
           -one-shot-bufferize="bufferize-function-boundaries"
           -convert-linalg-to-tile
-          -convert-tile-to-buckyball
+${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
           -lower-buckyball-to-bank-ssa
-          -assign-physical-banks
+${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
           -llvm-request-c-wrappers
           ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
           -convert-trace-to-llvm="cycle-trace"

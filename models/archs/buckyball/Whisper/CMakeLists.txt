@@ -47,12 +47,12 @@ add_custom_command(
           > subgraph0_linalg.mlir
   COMMAND ${BUDDY_BINARY_DIR}/buddy-opt subgraph0_linalg.mlir
             -convert-linalg-to-tile
-            -convert-tile-to-buckyball
+${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
             -batchmatmul-optimize
             -o subgraph0_loops.mlir
   COMMAND ${BUDDY_BINARY_DIR}/buddy-opt subgraph0_loops.mlir
             -lower-buckyball-to-bank-ssa
-            -assign-physical-banks
+${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
             ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
             ${BUCKYBALL_LOWER_BUCKYBALL}
             -o subgraph0_buckyball.mlir
