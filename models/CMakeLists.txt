@@ -45,9 +45,13 @@ endif()
 message(STATUS "Using Python3: ${Python3_EXECUTABLE}")
 
 set(WORKLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(MODELTEST_WORKLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(MODEL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/models)
 set(ARCH_DIR ${CMAKE_CURRENT_SOURCE_DIR}/archs)
 set(MODELTEST_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+if(NOT DEFINED WORKLOAD_LIB_DIR)
+  set(WORKLOAD_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../lib)
+endif()
 
 # ============================================================================
 # Parse ARCH variable: ARCH="gemmini,other_arch,..."
