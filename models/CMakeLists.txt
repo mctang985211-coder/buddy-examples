@@ -70,6 +70,12 @@ endif()
 # Parse MODEL variable: MODEL="lenet,resnet18,bert,..."
 # ============================================================================
 if (DEFINED MODEL)
+  # Explicit selection replaces any cached MODEL_* flags from prior configures.
+  foreach(model_flag IN ITEMS
+      LENET RESNET18 MOBILENETV3 YOLO26 BUDDYNEXT DEEPSEEKR1 STABLEDIFFUSION
+      WHISPER LLAMA2 BERT GEMMA4 QWEN3 MINIMAX_H3_FL2VA MINIMAX_H3_REF2VA)
+    set(MODEL_${model_flag} OFF)
+  endforeach()
   string(REPLACE "," ";" MODEL_LIST ${MODEL})
   foreach(model_item ${MODEL_LIST})
     string(STRIP ${model_item} model_item)
