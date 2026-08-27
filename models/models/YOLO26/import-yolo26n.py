@@ -22,18 +22,22 @@
 import argparse
 import os
 from pathlib import Path
+import sys
 
-import numpy as np
 import torch
 import torch._inductor.lowering
 from torch._inductor.decomposition import decompositions as inductor_decomp
 from ultralytics import YOLO
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from buddy.compiler.frontend import DynamoCompiler
 from buddy.compiler.graph import GraphDriver
 from buddy.compiler.graph.transform import simply_fuse
 from buddy.compiler.ops import tosa
 from buddy.compiler.trace import TraceConfig, load_trace_config
+
+from framework.quant.core.importer import quantize_model_graph
 
 
 parser = argparse.ArgumentParser(description="yolo26n model AOT importer")
@@ -71,7 +75,7 @@ else:
     if os.path.exists(verbose_path):
         os.remove(verbose_path)
 
-default_model_path = Path(__file__).resolve().parents[2] / "yolo26n.pt"
+default_model_path = output_dir / "yolo26n.pt"
 model_path = os.environ.get(
     "YOLO26N_MODEL_PATH",
     str(default_model_path if default_model_path.exists() else "yolo26n.pt"),
@@ -105,6 +109,15 @@ graph = graphs[0]
 params = dynamo_compiler.imported_params[graph]
 
 graph.fuse_ops([simply_fuse])
+quantize_model_graph(
+    graph,
+    params,
+    [name for name, _ in model.named_parameters()]
+    + [name for name, _ in model.named_buffers()],
+    output_dir,
+    "yolo26",
+    False,
+)
 driver = GraphDriver(graph)
 driver.subgraphs[0].lower_to_top_level_ir()
 with open(output_dir / "subgraph0.mlir", "w") as module_file:
@@ -112,11 +125,3 @@ with open(output_dir / "subgraph0.mlir", "w") as module_file:
 
 with open(output_dir / "forward.mlir", "w") as module_file:
     print(driver.construct_main_graph(True), file=module_file)
-
-np.concatenate(
-    [
-        param.detach().numpy().reshape([-1])
-        for param in params
-        if param.dtype == torch.float32
-    ]
-).tofile(output_dir / "arg0.data")

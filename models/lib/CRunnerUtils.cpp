@@ -80,6 +80,8 @@ static FILE *openTraceFilePath(const char *kind, int64_t depth, int64_t path0,
     fprintf(stderr, "failed to open trace file: %s\n", path);
     abort();
   }
+  if (setvbuf(file, nullptr, _IONBF, 0) != 0)
+    abort();
   return file;
 }
 
@@ -236,6 +238,32 @@ extern "C" void _mlir_ciface_buddyTraceTensorBF16Path(
     uint16_t value = ref.data[ref.offset + i * ref.strides[0]];
     fprintf(file, "%.9g\n", bf16ToF32(value));
   }
+  fclose(file);
+}
+
+extern "C" void _mlir_ciface_buddyTraceTensorI8Path(
+    int64_t id, int64_t depth, int64_t path0, int64_t path1, int64_t path2,
+    int64_t path3, StridedMemRefType<int8_t, 1> *tensor) {
+  (void)id;
+  checkTraceTensor(tensor);
+
+  DynamicMemRefType<int8_t> ref(*tensor);
+  FILE *file = openTraceFilePath("tensor", depth, path0, path1, path2, path3);
+  for (int64_t i = 0; i < ref.sizes[0]; ++i)
+    fprintf(file, "%d\n", static_cast<int>(ref.data[ref.offset + i * ref.strides[0]]));
+  fclose(file);
+}
+
+extern "C" void _mlir_ciface_buddyTraceTensorI32Path(
+    int64_t id, int64_t depth, int64_t path0, int64_t path1, int64_t path2,
+    int64_t path3, StridedMemRefType<int32_t, 1> *tensor) {
+  (void)id;
+  checkTraceTensor(tensor);
+
+  DynamicMemRefType<int32_t> ref(*tensor);
+  FILE *file = openTraceFilePath("tensor", depth, path0, path1, path2, path3);
+  for (int64_t i = 0; i < ref.sizes[0]; ++i)
+    fprintf(file, "%d\n", static_cast<int>(ref.data[ref.offset + i * ref.strides[0]]));
   fclose(file);
 }
 

@@ -26,11 +26,14 @@ import sys
 import numpy as np
 import torch
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
 from buddy.compiler.frontend import DynamoCompiler
 from buddy.compiler.graph import GraphDriver
 from buddy.compiler.graph.transform import simply_fuse
 from buddy.compiler.ops import tosa
 from buddy.compiler.trace import TraceConfig, load_trace_config
+from framework.quant.core.importer import quantize_model_graph
 from model import LeNet
 
 parser = argparse.ArgumentParser(description="LeNet model AOT importer")
@@ -54,16 +57,16 @@ if model_path is None:
     raise EnvironmentError(
         "The environment variable 'LENET_MODEL_PATH' is not set or is invalid."
     )
-model_dir = Path(model_path)
+output_dir = Path(model_path)
+source_dir = Path(__file__).resolve().parent
 
 model = LeNet()
 
-model = torch.load(model_dir / "lenet-model.pth", weights_only=False)
+model = torch.load(output_dir / "lenet-model.pth", weights_only=False)
 model = model.eval()
 
-output_dir = model_dir
 if args.trace:
-    trace = TraceConfig(load_trace_config(model_dir / "trace" / args.trace_config))
+    trace = TraceConfig(load_trace_config(source_dir / "trace" / args.trace_config))
     verbose = False
     verbose_path = None
 else:
@@ -91,19 +94,17 @@ graph = graphs[0]
 params = dynamo_compiler.imported_params[graph]
 pattern_list = [simply_fuse]
 graphs[0].fuse_ops(pattern_list)
+quantize_model_graph(
+    graph,
+    params,
+    [name for name, _ in model.named_parameters()],
+    output_dir,
+    "lenet",
+    True,
+)
 driver = GraphDriver(graphs[0])
 driver.subgraphs[0].lower_to_top_level_ir()
-path_prefix = os.path.dirname(os.path.abspath(__file__))
-with open(os.path.join(path_prefix, "subgraph0.mlir"), "w") as module_file:
+with open(output_dir / "subgraph0.mlir", "w") as module_file:
     print(driver.subgraphs[0]._imported_module, file=module_file)
-with open(os.path.join(path_prefix, "forward.mlir"), "w") as module_file:
+with open(output_dir / "forward.mlir", "w") as module_file:
     print(driver.construct_main_graph(True), file=module_file)
-
-params = dynamo_compiler.imported_params[graph]
-current_path = os.path.dirname(os.path.abspath(__file__))
-
-float32_param = np.concatenate(
-    [param.detach().numpy().reshape([-1]) for param in params]
-)
-
-float32_param.tofile(Path(current_path) / "arg0.data")

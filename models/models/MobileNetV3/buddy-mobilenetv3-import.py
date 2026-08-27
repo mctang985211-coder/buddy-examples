@@ -21,16 +21,20 @@
 import os
 from pathlib import Path
 import argparse
-import numpy as np
+import sys
 import torch
 import torchvision.models as models
 from torch._inductor.decomposition import decompositions as inductor_decomp
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from buddy.compiler.frontend import DynamoCompiler
 from buddy.compiler.graph import GraphDriver
 from buddy.compiler.graph.transform import simply_fuse
 from buddy.compiler.ops import tosa
 from buddy.compiler.trace import TraceConfig, load_trace_config
+
+from framework.quant.core.importer import quantize_model_graph
 
 # Parse command-line arguments.
 parser = argparse.ArgumentParser(description="MobileNetV3 model AOT importer")
@@ -91,6 +95,15 @@ graph = graphs[0]
 params = dynamo_compiler.imported_params[graph]
 pattern_list = [simply_fuse]
 graphs[0].fuse_ops(pattern_list)
+quantize_model_graph(
+    graph,
+    params,
+    [name for name, _ in model.named_parameters()]
+    + [name for name, _ in model.named_buffers()],
+    output_dir,
+    "mobilenetv3",
+    False,
+)
 driver = GraphDriver(graphs[0])
 driver.subgraphs[0].lower_to_top_level_ir()
 # Write generated files to the specified output directory.
@@ -98,13 +111,3 @@ with open(output_dir / "subgraph0.mlir", "w") as module_file:
     print(driver.subgraphs[0]._imported_module, file=module_file)
 with open(output_dir / "forward.mlir", "w") as module_file:
     print(driver.construct_main_graph(True), file=module_file)
-
-# Export parameters.
-float32_param = np.concatenate(
-    [
-        param.detach().numpy().reshape([-1])
-        for param in params
-        if param.dtype == torch.float32
-    ]
-)
-float32_param.tofile(output_dir / "arg0.data")

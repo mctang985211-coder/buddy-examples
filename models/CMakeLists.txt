@@ -14,7 +14,7 @@ set(RISCV_GNU_TOOLCHAIN $ENV{RISCV})
 
 option(BUCKYBALL_STABLE "Use stable LLVM Buckyball extensions" OFF)
 if(BUCKYBALL_STABLE)
-  set(BUCKYBALL_RISCV_MATTR "+xbbpebble,+xbbmeteor,+D")
+  set(BUCKYBALL_RISCV_MATTR "+xbbpebble,+xbuckyball,+D")
   set(BUCKYBALL_LOWER_BUCKYBALL "--lower-buckyball=stable=true")
   set(BUCKYBALL_LOWER_BUCKYBALL_RUSHB
       "--lower-buckyball=stable=true rushb=true")
