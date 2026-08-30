@@ -2,6 +2,7 @@ set(MODEL_DEEPSEEKR1_DIR ${MODEL_DIR}/DeepSeekR1)
 set(MODEL_LENET_DIR ${MODEL_DIR}/LeNet)
 set(MODEL_RESNET18_DIR ${MODEL_DIR}/ResNet18)
 set(MODEL_BERT_DIR ${MODEL_DIR}/Bert)
+set(MODEL_DISTILBERT_DIR ${MODEL_DIR}/DistilBert)
 set(MODEL_MOBILENETV3_DIR ${MODEL_DIR}/MobileNetV3)
 set(MODEL_WHISPER_DIR ${MODEL_DIR}/Whisper)
 set(MODEL_STABLEDIFFUSION_DIR ${MODEL_DIR}/StableDiffusion)
@@ -28,6 +29,10 @@ endif()
 
 if (MODEL_BERT)
   add_subdirectory(Bert)
+endif()
+
+if (MODEL_DISTILBERT)
+  add_subdirectory(DistilBert)
 endif()
 
 if (MODEL_MOBILENETV3)

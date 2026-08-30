@@ -1,0 +1,378 @@
+{
+  "model_id": "distilbert/distilbert-base-uncased",
+  "sentence": "The quick brown fox jumps over the lazy dog",
+  "input_ids": [
+    101,
+    1996,
+    4248,
+    2829,
+    4419,
+    14523,
+    2058,
+    1996,
+    13971,
+    3899,
+    102
+  ],
+  "attention_mask": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "device": "cpu",
+  "dtype": "float32",
+  "shape": [
+    1,
+    11,
+    30522
+  ],
+  "inference_seconds": 0.033634,
+  "logits_file": "distilbert_mlm_logits_f32.bin",
+  "logits_sha256": "8830763a4fdb2d6f782353949c9baaf906a1a9b15a405774719c4c4da0f2a7b6",
+  "logits_bytes": 1342968,
+  "tolerance": {
+    "atol": 0.001,
+    "rtol": 0.001,
+    "metric": "np.allclose"
+  },
+  "top_k_per_position": [
+    {
+      "position": 0,
+      "top": [
+        {
+          "token_id": 1012,
+          "token": ".",
+          "logit": 5.436077117919922
+        },
+        {
+          "token_id": 1996,
+          "token": "the",
+          "logit": 4.924785614013672
+        },
+        {
+          "token_id": 1007,
+          "token": ")",
+          "logit": 4.700313568115234
+        },
+        {
+          "token_id": 1010,
+          "token": ",",
+          "logit": 4.338920593261719
+        },
+        {
+          "token_id": 1000,
+          "token": "\"",
+          "logit": 4.151233673095703
+        }
+      ]
+    },
+    {
+      "position": 1,
+      "top": [
+        {
+          "token_id": 1996,
+          "token": "the",
+          "logit": 14.650728225708008
+        },
+        {
+          "token_id": 1037,
+          "token": "a",
+          "logit": 8.521097183227539
+        },
+        {
+          "token_id": 1012,
+          "token": ".",
+          "logit": 6.887087821960449
+        },
+        {
+          "token_id": 1997,
+          "token": "of",
+          "logit": 6.2787017822265625
+        },
+        {
+          "token_id": 1000,
+          "token": "\"",
+          "logit": 5.540780067443848
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "top": [
+        {
+          "token_id": 4248,
+          "token": "quick",
+          "logit": 14.515405654907227
+        },
+        {
+          "token_id": 4030,
+          "token": "slow",
+          "logit": 10.238271713256836
+        },
+        {
+          "token_id": 2210,
+          "token": "little",
+          "logit": 9.360236167907715
+        },
+        {
+          "token_id": 2502,
+          "token": "big",
+          "logit": 8.500948905944824
+        },
+        {
+          "token_id": 2460,
+          "token": "short",
+          "logit": 8.49297046661377
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "top": [
+        {
+          "token_id": 2829,
+          "token": "brown",
+          "logit": 16.08450698852539
+        },
+        {
+          "token_id": 2210,
+          "token": "little",
+          "logit": 8.358601570129395
+        },
+        {
+          "token_id": 2630,
+          "token": "blue",
+          "logit": 8.01555347442627
+        },
+        {
+          "token_id": 3756,
+          "token": "yellow",
+          "logit": 7.954883098602295
+        },
+        {
+          "token_id": 2665,
+          "token": "green",
+          "logit": 7.914355278015137
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "top": [
+        {
+          "token_id": 4419,
+          "token": "fox",
+          "logit": 16.750764846801758
+        },
+        {
+          "token_id": 4937,
+          "token": "cat",
+          "logit": 10.262741088867188
+        },
+        {
+          "token_id": 10442,
+          "token": "rabbit",
+          "logit": 9.98830795288086
+        },
+        {
+          "token_id": 8000,
+          "token": "mouse",
+          "logit": 9.925102233886719
+        },
+        {
+          "token_id": 3899,
+          "token": "dog",
+          "logit": 9.835010528564453
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "top": [
+        {
+          "token_id": 14523,
+          "token": "jumps",
+          "logit": 16.440038681030273
+        },
+        {
+          "token_id": 29195,
+          "token": "leaps",
+          "logit": 12.37551212310791
+        },
+        {
+          "token_id": 3216,
+          "token": "runs",
+          "logit": 11.633129119873047
+        },
+        {
+          "token_id": 5598,
+          "token": "jumped",
+          "logit": 10.319944381713867
+        },
+        {
+          "token_id": 8660,
+          "token": "jumping",
+          "logit": 9.967257499694824
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "top": [
+        {
+          "token_id": 2058,
+          "token": "over",
+          "logit": 23.17949676513672
+        },
+        {
+          "token_id": 2006,
+          "token": "on",
+          "logit": 11.708828926086426
+        },
+        {
+          "token_id": 2682,
+          "token": "above",
+          "logit": 10.898457527160645
+        },
+        {
+          "token_id": 2044,
+          "token": "after",
+          "logit": 10.85059928894043
+        },
+        {
+          "token_id": 2104,
+          "token": "under",
+          "logit": 10.692351341247559
+        }
+      ]
+    },
+    {
+      "position": 7,
+      "top": [
+        {
+          "token_id": 1996,
+          "token": "the",
+          "logit": 20.853240966796875
+        },
+        {
+          "token_id": 1037,
+          "token": "a",
+          "logit": 10.452888488769531
+        },
+        {
+          "token_id": 2010,
+          "token": "his",
+          "logit": 8.244406700134277
+        },
+        {
+          "token_id": 2049,
+          "token": "its",
+          "logit": 8.114110946655273
+        },
+        {
+          "token_id": 2019,
+          "token": "an",
+          "logit": 7.504077911376953
+        }
+      ]
+    },
+    {
+      "position": 8,
+      "top": [
+        {
+          "token_id": 13971,
+          "token": "lazy",
+          "logit": 15.99201774597168
+        },
+        {
+          "token_id": 2502,
+          "token": "big",
+          "logit": 8.23715877532959
+        },
+        {
+          "token_id": 2210,
+          "token": "little",
+          "logit": 8.052634239196777
+        },
+        {
+          "token_id": 4030,
+          "token": "slow",
+          "logit": 7.795041084289551
+        },
+        {
+          "token_id": 2235,
+          "token": "small",
+          "logit": 7.173227310180664
+        }
+      ]
+    },
+    {
+      "position": 9,
+      "top": [
+        {
+          "token_id": 1012,
+          "token": ".",
+          "logit": 17.5947322845459
+        },
+        {
+          "token_id": 1025,
+          "token": ";",
+          "logit": 14.508819580078125
+        },
+        {
+          "token_id": 999,
+          "token": "!",
+          "logit": 12.665148735046387
+        },
+        {
+          "token_id": 3899,
+          "token": "dog",
+          "logit": 12.004061698913574
+        },
+        {
+          "token_id": 1029,
+          "token": "?",
+          "logit": 11.033154487609863
+        }
+      ]
+    },
+    {
+      "position": 10,
+      "top": [
+        {
+          "token_id": 1012,
+          "token": ".",
+          "logit": 18.58954429626465
+        },
+        {
+          "token_id": 1010,
+          "token": ",",
+          "logit": 11.521940231323242
+        },
+        {
+          "token_id": 1996,
+          "token": "the",
+          "logit": 8.180755615234375
+        },
+        {
+          "token_id": 1029,
+          "token": "?",
+          "logit": 7.883578300476074
+        },
+        {
+          "token_id": 1007,
+          "token": ")",
+          "logit": 7.3004961013793945
+        }
+      ]
+    }
+  ]
+}
