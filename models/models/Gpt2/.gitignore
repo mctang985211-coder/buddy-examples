@@ -1,0 +1,6 @@
+# Artifacts of import-gpt2.py when it is run with `--output-dir .`.
+# The CMake target writes them into output/, which the e2e .gitignore already
+# excludes; the canonical reference under reference/ is committed on purpose.
+arg0.data
+*.mlir
+gpt2_logits_f32.bin

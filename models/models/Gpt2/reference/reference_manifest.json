@@ -1,0 +1,303 @@
+{
+  "model_id": "openai-community/gpt2",
+  "sentence": "The quick brown fox jumps over the lazy dog",
+  "input_ids": [
+    464,
+    2068,
+    7586,
+    21831,
+    18045,
+    625,
+    262,
+    16931,
+    3290
+  ],
+  "device": "cpu",
+  "dtype": "float32",
+  "shape": [
+    1,
+    9,
+    50257
+  ],
+  "inference_seconds": 0.158058,
+  "logits_file": "gpt2_lm_logits_f32.bin",
+  "logits_sha256": "88a2f0fbd17108db959110e65c4c2f43d8a1a46d5953c853bd0fc81be8e667f8",
+  "logits_bytes": 1809252,
+  "tolerance": {
+    "atol": 0.001,
+    "rtol": 0.001,
+    "metric": "np.allclose"
+  },
+  "top_k_per_position": [
+    {
+      "position": 0,
+      "top": [
+        {
+          "token_id": 198,
+          "token": "\u010a",
+          "logit": -31.86392593383789
+        },
+        {
+          "token_id": 262,
+          "token": "\u0120the",
+          "logit": -32.17393112182617
+        },
+        {
+          "token_id": 366,
+          "token": "\u0120\"",
+          "logit": -32.37013244628906
+        },
+        {
+          "token_id": 11,
+          "token": ",",
+          "logit": -32.63805389404297
+        },
+        {
+          "token_id": 257,
+          "token": "\u0120a",
+          "logit": -32.83447265625
+        }
+      ]
+    },
+    {
+      "position": 1,
+      "top": [
+        {
+          "token_id": 12,
+          "token": "-",
+          "logit": -55.38223648071289
+        },
+        {
+          "token_id": 3280,
+          "token": "\u0120answer",
+          "logit": -55.49547576904297
+        },
+        {
+          "token_id": 290,
+          "token": "\u0120and",
+          "logit": -55.58187484741211
+        },
+        {
+          "token_id": 2882,
+          "token": "\u0120response",
+          "logit": -55.985164642333984
+        },
+        {
+          "token_id": 4259,
+          "token": "\u0120fix",
+          "logit": -56.42506408691406
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "top": [
+        {
+          "token_id": 494,
+          "token": "ie",
+          "logit": -59.4204216003418
+        },
+        {
+          "token_id": 444,
+          "token": "ies",
+          "logit": -60.98592758178711
+        },
+        {
+          "token_id": 12,
+          "token": "-",
+          "logit": -61.1702766418457
+        },
+        {
+          "token_id": 278,
+          "token": "ing",
+          "logit": -61.374813079833984
+        },
+        {
+          "token_id": 290,
+          "token": "\u0120and",
+          "logit": -61.65053176879883
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "top": [
+        {
+          "token_id": 274,
+          "token": "es",
+          "logit": -82.75753784179688
+        },
+        {
+          "token_id": 373,
+          "token": "\u0120was",
+          "logit": -83.80078887939453
+        },
+        {
+          "token_id": 318,
+          "token": "\u0120is",
+          "logit": -84.08433532714844
+        },
+        {
+          "token_id": 338,
+          "token": "'s",
+          "logit": -84.12138366699219
+        },
+        {
+          "token_id": 11,
+          "token": ",",
+          "logit": -84.17918395996094
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "top": [
+        {
+          "token_id": 510,
+          "token": "\u0120up",
+          "logit": -119.90444946289062
+        },
+        {
+          "token_id": 503,
+          "token": "\u0120out",
+          "logit": -120.10355377197266
+        },
+        {
+          "token_id": 319,
+          "token": "\u0120on",
+          "logit": -120.68701934814453
+        },
+        {
+          "token_id": 287,
+          "token": "\u0120in",
+          "logit": -120.75006866455078
+        },
+        {
+          "token_id": 625,
+          "token": "\u0120over",
+          "logit": -120.86969757080078
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "top": [
+        {
+          "token_id": 262,
+          "token": "\u0120the",
+          "logit": -72.9034423828125
+        },
+        {
+          "token_id": 257,
+          "token": "\u0120a",
+          "logit": -74.27526092529297
+        },
+        {
+          "token_id": 284,
+          "token": "\u0120to",
+          "logit": -74.92847442626953
+        },
+        {
+          "token_id": 340,
+          "token": "\u0120it",
+          "logit": -75.14009857177734
+        },
+        {
+          "token_id": 290,
+          "token": "\u0120and",
+          "logit": -75.14373016357422
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "top": [
+        {
+          "token_id": 13990,
+          "token": "\u0120fence",
+          "logit": -84.38544464111328
+        },
+        {
+          "token_id": 5743,
+          "token": "\u0120edge",
+          "logit": -85.09947204589844
+        },
+        {
+          "token_id": 3355,
+          "token": "\u0120wall",
+          "logit": -85.5538330078125
+        },
+        {
+          "token_id": 3084,
+          "token": "\u0120table",
+          "logit": -85.76918029785156
+        },
+        {
+          "token_id": 1353,
+          "token": "\u0120top",
+          "logit": -85.77378845214844
+        }
+      ]
+    },
+    {
+      "position": 7,
+      "top": [
+        {
+          "token_id": 11,
+          "token": ",",
+          "logit": -80.93427276611328
+        },
+        {
+          "token_id": 21831,
+          "token": "\u0120fox",
+          "logit": -81.20467376708984
+        },
+        {
+          "token_id": 7586,
+          "token": "\u0120brown",
+          "logit": -81.43222045898438
+        },
+        {
+          "token_id": 2330,
+          "token": "\u0120white",
+          "logit": -81.5325927734375
+        },
+        {
+          "token_id": 3290,
+          "token": "\u0120dog",
+          "logit": -81.8631362915039
+        }
+      ]
+    },
+    {
+      "position": 8,
+      "top": [
+        {
+          "token_id": 290,
+          "token": "\u0120and",
+          "logit": -85.08746337890625
+        },
+        {
+          "token_id": 11,
+          "token": ",",
+          "logit": -85.63367462158203
+        },
+        {
+          "token_id": 13,
+          "token": ".",
+          "logit": -86.35477447509766
+        },
+        {
+          "token_id": 284,
+          "token": "\u0120to",
+          "logit": -86.61881256103516
+        },
+        {
+          "token_id": 338,
+          "token": "'s",
+          "logit": -86.86152648925781
+        }
+      ]
+    }
+  ]
+}
