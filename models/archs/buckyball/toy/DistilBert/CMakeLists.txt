@@ -1,11 +1,20 @@
 # DistilBert on the toy single-core chip (buckyball arch layout).
 #
-# toy core mounts the Gemmini ball (balldomain ballId 0), so the subgraph
-# matmuls lower through the gemmini dialect (precedent: archs/gemmini/Bert),
-# while everything the toy core runs on its scalar RISC-V pipeline --
-# embedding lookups, softmax, layernorm, gelu, residual adds -- lowers to
-# plain linalg loops (precedent: the forward.o pipeline shared by
-# goban/Bert and gemmini/Bert).
+# toy is a buckyball bank target (pb_to_target_registry.py
+# --print-bank-targets), so the subgraph matmuls lower through the buckyball
+# tile -> bank-ssa -> bank-ssa-intrinsics pipeline. Precedents:
+# archs/buckyball/pebble/LeNet (single-core model layout) and
+# archs/buckyball/goban/Bert.
+#
+# The upstream gemmini dialect pipeline (-convert-linalg-to-gemmini
+# -lower-gemmini) is NOT usable on this chip: it emits Berkeley-Gemmini ISA
+# encodings (CONFIG=0, FLUSH=7, LOOP_WS=8, LOOP_WS_CONFIG_BOUNDS=9, ...,
+# see buddy-mlir llvm/.../RISCVInstrInfoXGemmini.td) that toy's GemminiBall
+# registry (funct7 2/3/53/66/67/80-87/96-105,
+# examples/cores/toy/configs/balldomains/default.toml) does not declare, and
+# its WS-dataflow config semantics (addrs_ab/dc packing, nonzero D) differ
+# from the ball's bemu contract (OS dataflow only, zero D, one address per
+# config instruction).
 #
 # The run target name is the one bb-tests/workloads/scripts/build.py
 # registers in _MODELS for the "distilbert" CLI model key.
@@ -18,7 +27,8 @@ set(BUCKYBALL_DISTILBERT_DIR ${BUCKYBALL_DIR}/DistilBert)
 set(INTERFACE_DIR ${BUDDY_MLIR_DIR}/frontend/Interfaces)
 set(INCLUDE_DIR ${MODELTEST_LIB_DIR})
 
-# forward.o: TOSA -> linalg -> scalar loops on the toy core RISC-V pipeline.
+# forward.o: TOSA -> linalg -> scalar loops on the toy core RISC-V pipeline
+# (embedding lookup, softmax, layernorm, gelu, residual adds).
 add_custom_command(
   OUTPUT forward.o
   COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${MODEL_DISTILBERT_GENERATED_DIR}/forward.mlir
@@ -44,44 +54,37 @@ add_custom_command(
   COMMENT "Building forward.o"
   VERBATIM)
 
-# subgraph0.o: matmuls onto the toy chip's Gemmini ball via the gemmini
-# dialect; non-matmul glue stays on scalar loops.
+# subgraph0.o: scalar host fallback on the toy single core. Neither
+# compiler path to toy's mounted balls is usable today: the upstream gemmini
+# dialect pipeline emits Berkeley-Gemmini encodings toy's registry does not
+# declare (funct7 9 panic in bemu), and toy mounts no ball with a tile
+# lowering hook (BuckyballBallLoweringHooks.inc TILE section is empty for
+# toy; smatmul/transpose/relu own them), so the buckyball tile pipeline
+# cannot lower here either (tile.tile_transpose survives to
+# buddy-translate). Matmuls therefore lower to plain scalar loops next to
+# the other host-fallback ops — see the ball/core follow-up specs recorded
+# in the PR description for restoring an accelerator path.
 add_custom_command(
   OUTPUT subgraph0.o
+  BYPRODUCTS subgraph0_linalg.mlir
+  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${MODEL_DISTILBERT_GENERATED_DIR}/subgraph0.mlir
+            -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))"
+          > subgraph0_linalg.mlir
   COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${MODEL_DISTILBERT_GENERATED_DIR}/subgraph0.mlir
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
           ${BUDDY_BINARY_DIR}/buddy-opt
+            -extend-trace-to-linalg
             -eliminate-empty-tensors
-            -convert-elementwise-to-linalg
             -convert-tensor-to-linalg
-            -one-shot-bufferize="bufferize-function-boundaries"
-            -convert-linalg-to-gemmini
-            -batchmatmul-optimize
-            > subgraph0_loops.mlir
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${MODEL_DISTILBERT_GENERATED_DIR}/subgraph0.mlir
-            -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
-          ${BUDDY_BINARY_DIR}/buddy-opt
-            -eliminate-empty-tensors
             -convert-elementwise-to-linalg
-            -convert-tensor-to-linalg
             -one-shot-bufferize="bufferize-function-boundaries"
-            -convert-linalg-to-gemmini
-            -lower-gemmini
-            > subgraph0_gemmini.mlir
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${MODEL_DISTILBERT_GENERATED_DIR}/subgraph0.mlir
-            -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
-          ${BUDDY_BINARY_DIR}/buddy-opt
-            -eliminate-empty-tensors
-            -convert-elementwise-to-linalg
-            -convert-tensor-to-linalg
-            -one-shot-bufferize="bufferize-function-boundaries"
-            -convert-linalg-to-gemmini
+            -llvm-request-c-wrappers
+            -convert-trace-to-llvm="cycle-trace"
             -expand-strided-metadata
             -convert-linalg-to-loops
+            -lower-affine
             -convert-scf-to-cf
-            -llvm-request-c-wrappers
-            -lower-gemmini
-            -ownership-based-buffer-deallocation
+            -convert-cf-to-llvm
             -buffer-deallocation-simplification
             -bufferization-lower-deallocations
             -convert-math-to-llvm
@@ -91,7 +94,7 @@ add_custom_command(
             -finalize-memref-to-llvm
             -reconcile-unrealized-casts |
           ${BUDDY_BINARY_DIR}/buddy-translate --buddy-to-llvmir |
-          ${BUDDY_BINARY_DIR}/buddy-llc -filetype=obj -mtriple=riscv64 -O2 -mattr=+xgemmini,+D -float-abi=hard -o subgraph0.o
+          ${BUDDY_BINARY_DIR}/buddy-llc -filetype=obj -mtriple=riscv64 -O2 -mattr=${BUCKYBALL_RISCV_MATTR} -float-abi=hard -o subgraph0.o
         DEPENDS ${MODEL_DISTILBERT_GENERATED_DIR}/subgraph0.mlir
   COMMENT "Building subgraph0.o"
   VERBATIM)
@@ -104,7 +107,10 @@ add_executable(buddy-buckyball-distilbert-run ${MODEL_DISTILBERT_DIR}/distilbert
 add_dependencies(buddy-buckyball-distilbert-run BuckyballDistilBert)
 
 target_include_directories(buddy-buckyball-distilbert-run PRIVATE ${INTERFACE_DIR} ${INCLUDE_DIR})
-set(BUDDY_DISTILBERT_LIBS BuckyballDistilBert ModelTestCRunnerUtils ModelTestDIP_riscv)
+# DistilBert uses no DIP (resize) ops: ModelTestDIP_riscv is deliberately not
+# linked, so the DIP.mlir toolchain dependency stays out of this target's
+# ninja closure.
+set(BUDDY_DISTILBERT_LIBS BuckyballDistilBert ModelTestCRunnerUtils)
 target_link_libraries(buddy-buckyball-distilbert-run -static ${BUDDY_DISTILBERT_LIBS})
 
 set(DISTILBERT_OUTPUT_DIR ${BUCKYBALL_OUTPUT_DIR}/DistilBert)
@@ -142,3 +148,14 @@ add_custom_target(sync-buckyball-distilbert-deps
 )
 
 add_dependencies(buddy-buckyball-distilbert-run sync-buckyball-distilbert-deps)
+
+# Perfetto evidence chain (design doc §4.7) is intentionally NOT wired here
+# yet: -extend-trace-to-linalg only extends trace.start scopes, which the
+# model-side import (import-distilbert.py) must insert from a trace TOML —
+# LeNet precedent: models/LeNet/trace/trace.toml feeding its import. Until
+# the model side re-imports with trace scopes, no cycle files are produced
+# and a perfetto target would fail with "no cycle trace files found". The
+# bbdev PERFETTO_TARGETS mapping for buddy-buckyball-distilbert-run is
+# therefore also absent for now. Follow-up (workload line): re-import with a
+# trace TOML, then re-add add_buckyball_perfetto_target(...) mirroring
+# pebble/LeNet and restore the bbdev mapping.
