@@ -1,0 +1,7 @@
+# Artifacts of import-distilbert.py when it is run with `--output-dir .`.
+# The CMake target writes them into output/, which the e2e .gitignore already
+# excludes; the canonical reference under reference/ is committed on purpose.
+arg0.data
+arg1.data
+*.mlir
+distilbert_logits_f32.bin
