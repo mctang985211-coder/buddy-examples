@@ -72,8 +72,8 @@ void loadBinary(const std::string &path, char *dest, std::streamsize bytes) {
 }
 
 /// Predict the top-k vocabulary ids for one token position.
-std::vector<int64_t> topK(const float *row, int k) {
-  std::vector<int64_t> ids(k);
+std::vector<int64_t> topK(const float *row, int vocabSize, int k) {
+  std::vector<int64_t> ids(vocabSize);
   std::iota(ids.begin(), ids.end(), 0);
   std::sort(ids.begin(), ids.end(),
             [&](int64_t a, int64_t b) { return row[a] > row[b]; });
@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
   const float *data = logits.getData();
   for (int64_t position = 0; position < kSeqLen; ++position) {
     std::cout << "[Result] pos " << position << ": ";
-    for (int64_t id : topK(data + position * kVocabSize, 5))
+    for (int64_t id : topK(data + position * kVocabSize, kVocabSize, 5))
       std::cout << vocab[id] << " (" << data[position * kVocabSize + id]
                 << ") ";
     std::cout << std::endl;
