@@ -2,7 +2,6 @@ set(MODEL_DEEPSEEKR1_DIR ${MODEL_DIR}/DeepSeekR1)
 set(MODEL_LENET_DIR ${MODEL_DIR}/LeNet)
 set(MODEL_RESNET18_DIR ${MODEL_DIR}/ResNet18)
 set(MODEL_BERT_DIR ${MODEL_DIR}/Bert)
-set(MODEL_DISTILBERT_DIR ${MODEL_DIR}/DistilBert)
 set(MODEL_MOBILENETV3_DIR ${MODEL_DIR}/MobileNetV3)
 set(MODEL_WHISPER_DIR ${MODEL_DIR}/Whisper)
 set(MODEL_STABLEDIFFUSION_DIR ${MODEL_DIR}/StableDiffusion)
@@ -13,9 +12,6 @@ set(MODEL_BUDDYNEXT_DIR ${MODEL_DIR}/BuddyNext)
 set(MODEL_GEMMA4_DIR ${MODEL_DIR}/Gemma4)
 set(MODEL_MINIMAX_H3_FL2VA_DIR ${MODEL_DIR}/MiniMaxH3FL2VA)
 set(MODEL_MINIMAX_H3_REF2VA_DIR ${MODEL_DIR}/MiniMaxH3Ref2VA)
-set(MODEL_GPT2_DIR ${MODEL_DIR}/Gpt2)
-set(MODEL_BERTTINY_DIR ${MODEL_DIR}/BertTiny)
-set(MODEL_BERTMINI_DIR ${MODEL_DIR}/BertMini)
 
 # Conditionally add model subdirectories based on MODEL_* flags
 if (MODEL_LENET)
@@ -32,10 +28,6 @@ endif()
 
 if (MODEL_BERT)
   add_subdirectory(Bert)
-endif()
-
-if (MODEL_DISTILBERT)
-  add_subdirectory(DistilBert)
 endif()
 
 if (MODEL_MOBILENETV3)
@@ -76,16 +68,4 @@ endif()
 
 if (MODEL_MINIMAX_H3_REF2VA)
   add_subdirectory(MiniMaxH3Ref2VA)
-endif()
-
-if (MODEL_GPT2)
-  add_subdirectory(Gpt2)
-endif()
-
-if (MODEL_BERTTINY)
-  add_subdirectory(BertTiny)
-endif()
-
-if (MODEL_BERTMINI)
-  add_subdirectory(BertMini)
 endif()

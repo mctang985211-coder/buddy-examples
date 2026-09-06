@@ -1,8 +1,0 @@
-# Artifacts of import-bertmini.py when it is run with `--output-dir .`.
-# The CMake target writes them into output/, which the models/models
-# .gitignore already excludes; the canonical reference under reference/ is
-# committed on purpose.
-arg0.data
-arg1.data
-*.mlir
-bertmini_logits_f32.bin
