@@ -8,7 +8,27 @@ if(NOT DEFINED ENV{BUDDY_MLIR_BUILD_DIR})
     "BUDDY_MLIR_BUILD_DIR is not set. Enter the nix develop shell so "
     "sourceme.sh is loaded, then re-run cmake.")
 endif()
+# buddy-mlir source root. bbdev injects BUDDY_MLIR_BUILD_DIR per chip
+# (<buddy-mlir>/build/<chip>, sourceme.sh:34); the legacy single-build
+# convention (<buddy-mlir>/build) needs one ".." to reach the source root,
+# the per-chip layout needs two. CMake if(EXISTS) does not collapse "..",
+# so normalize through get_filename_component before probing. Fail loudly
+# when neither convention resolves: a wrong root breaks every DIP/DAP/isa
+# include path downstream.
 set(BUDDY_MLIR_DIR $ENV{BUDDY_MLIR_BUILD_DIR}/..)
+get_filename_component(BUDDY_MLIR_DIP_PROBE
+  "${BUDDY_MLIR_DIR}/frontend/Interfaces/lib/DIP.mlir" ABSOLUTE)
+if(NOT EXISTS "${BUDDY_MLIR_DIP_PROBE}")
+  set(BUDDY_MLIR_DIR $ENV{BUDDY_MLIR_BUILD_DIR}/../..)
+  get_filename_component(BUDDY_MLIR_DIP_PROBE
+    "${BUDDY_MLIR_DIR}/frontend/Interfaces/lib/DIP.mlir" ABSOLUTE)
+  if(NOT EXISTS "${BUDDY_MLIR_DIP_PROBE}")
+    message(FATAL_ERROR
+      "Cannot locate the buddy-mlir source root from BUDDY_MLIR_BUILD_DIR="
+      "$ENV{BUDDY_MLIR_BUILD_DIR}: neither <dir>/.. nor <dir>/../.. contains "
+      "frontend/Interfaces/lib/DIP.mlir")
+  endif()
+endif()
 set(BUDDY_BINARY_DIR $ENV{BUDDY_MLIR_BUILD_DIR}/bin)
 set(RISCV_GNU_TOOLCHAIN $ENV{RISCV})
 
