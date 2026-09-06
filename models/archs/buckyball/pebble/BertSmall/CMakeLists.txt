@@ -1,12 +1,17 @@
 # BertSmall (prajjwal1/bert-small) layout for the pebble chip.
 #
-# No upstream same-named pebble layout exists (pebble's nine layouts are
-# LeNet/ResNet18/MobileNetV3/YOLO26/BuddyNext/DeepSeekR1/StableDiffusion/
-# Whisper/llama2; a Bert-family layout exists only under goban/Bert), so this
-# file follows the goban/Bert Bert-family shape — fp32 transformer forward on
-# the host CPU with one accelerator subgraph — while referencing the pebble
-# tile->buckyball machinery through the shared BUCKYBALL_* variables that
-# archs/buckyball/CMakeLists.txt defines for goban and pebble.
+# Host-linalg form (upstream precedent: pebble/llama2/CMakeLists.txt and
+# pebble/StableDiffusion/CMakeLists.txt, which never pass
+# -convert-linalg-to-tile / -convert-tile-to-buckyball /
+# buckyball_assign_physical_banks — the in-tree shape for a transformer whose
+# ops stay on the host CPU). archs/buckyball/CMakeLists.txt defines the
+# tile->buckyball machinery variables for goban and pebble, but this layout
+# deliberately does not use them: the importer's subgraph0.mlir contains an
+# i1 (attention-mask) transpose site that pebble's
+# MemTransposeToBankSSAPatterns rejects (round-1 CI: "transpose only supports
+# 8-bit or 32-bit elements"; derived spec D-tr-1 in PR #25). Under this form
+# every op of both subgraphs lowers to riscv64 host loops; no buckyball
+# dialect op is ever created.
 #
 # BertSmall's importer (import-bertsmall.py) emits exactly forward.mlir +
 # subgraph0.mlir into <model>/output/, so unlike goban/Bert there is no
@@ -17,7 +22,6 @@ set(CMAKE_CXX_COMPILER ${RISCV_GNU_TOOLCHAIN}/bin/riscv64-unknown-linux-gnu-g++)
 
 set(MODEL_BERTSMALL_DIR ${MODEL_DIR}/BertSmall)
 set(MODEL_BERTSMALL_GENERATED_DIR ${MODEL_BERTSMALL_DIR}/output)
-set(BUCKYBALL_BERTSMALL_DIR ${BUCKYBALL_DIR}/BertSmall)
 set(INTERFACE_DIR ${BUDDY_MLIR_DIR}/frontend/Interfaces)
 set(INCLUDE_DIR ${MODEL_BERTSMALL_DIR}/include)
 
@@ -51,60 +55,21 @@ add_custom_command(
   COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${MODEL_BERTSMALL_GENERATED_DIR}/subgraph0.mlir
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
           ${BUDDY_BINARY_DIR}/buddy-opt
-            -convert-elementwise-to-linalg
-            -eliminate-empty-tensors
-            -convert-tensor-to-linalg
-            -one-shot-bufferize="bufferize-function-boundaries"
-          > subgraph0_linalg.mlir
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${MODEL_BERTSMALL_GENERATED_DIR}/subgraph0.mlir
-            -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
-          ${BUDDY_BINARY_DIR}/buddy-opt
             -eliminate-empty-tensors
             -convert-elementwise-to-linalg
             -convert-tensor-to-linalg
             -one-shot-bufferize="bufferize-function-boundaries"
-            -convert-linalg-to-tile
-            ${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
-            -batchmatmul-optimize
-            > subgraph0_loops.mlir
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${MODEL_BERTSMALL_GENERATED_DIR}/subgraph0.mlir
-            -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
-          ${BUDDY_BINARY_DIR}/buddy-opt
-            -eliminate-empty-tensors
-            -convert-elementwise-to-linalg
-            -convert-tensor-to-linalg
-            -one-shot-bufferize="bufferize-function-boundaries"
-            -convert-linalg-to-tile
-            ${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
-            -batchmatmul-optimize
-            -lower-buckyball-to-bank-ssa
-            ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
-            ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
-            ${BUCKYBALL_LOWER_BUCKYBALL}
-            > subgraph0_buckyball.mlir
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${MODEL_BERTSMALL_GENERATED_DIR}/subgraph0.mlir
-            -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
-          ${BUDDY_BINARY_DIR}/buddy-opt
-            -eliminate-empty-tensors
-            -convert-elementwise-to-linalg
-            -convert-tensor-to-linalg
-            -one-shot-bufferize="bufferize-function-boundaries"
-            -convert-linalg-to-tile
-            ${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
-            -batchmatmul-optimize
-            -lower-buckyball-to-bank-ssa
-            ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
             -llvm-request-c-wrappers
-            ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
             -convert-trace-to-llvm="cycle-trace"
             -expand-strided-metadata
             -convert-linalg-to-loops
-            ${BUCKYBALL_LOWER_BUCKYBALL}
+            -buffer-deallocation-simplification
+            -bufferization-lower-deallocations
+            -convert-vector-to-scf
             -lower-affine
             -convert-scf-to-cf
             -convert-cf-to-llvm
-            -buffer-deallocation-simplification
-            -bufferization-lower-deallocations
+            -convert-vector-to-llvm
             -convert-math-to-llvm
             -convert-math-to-libm
             -convert-arith-to-llvm
