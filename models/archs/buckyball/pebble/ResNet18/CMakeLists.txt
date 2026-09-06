@@ -5,9 +5,6 @@ set(MODEL_RESNET18_GENERATED_DIR ${MODEL_RESNET18_DIR}/output)
 set(BUCKYBALL_RESNET18_DIR ${BUCKYBALL_DIR}/ResNet18)
 set(INTERFACE_DIR ${BUDDY_MLIR_DIR}/frontend/Interfaces)
 set(INCLUDE_DIR ${MODELTEST_LIB_DIR})
-set(RESNET18_TRACE_MODES "cycle-trace" CACHE STRING "ResNet18 trace modes")
-set(RESNET18_TRACE_CONFIG "trace/trace.toml" CACHE FILEPATH "ResNet18 trace config")
-
 
 add_custom_command(
   OUTPUT  forward.o
@@ -63,6 +60,8 @@ ${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
 ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
             ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
             ${BUCKYBALL_LOWER_BUCKYBALL}
+            -canonicalize
+            -cse
             > subgraph0_buckyball.mlir
   COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${MODEL_RESNET18_GENERATED_DIR}/subgraph0.mlir
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
@@ -73,14 +72,15 @@ ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
             -one-shot-bufferize="bufferize-function-boundaries"
             -convert-linalg-to-tile
 ${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
-            -lower-buckyball-to-bank-ssa
+          -lower-buckyball-to-bank-ssa
 ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
             -llvm-request-c-wrappers
             ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
-            -convert-trace-to-llvm="${RESNET18_TRACE_MODES}"
             -expand-strided-metadata
             -convert-linalg-to-loops
             ${BUCKYBALL_LOWER_BUCKYBALL}
+            -canonicalize
+            -cse
             -lower-affine
             -convert-scf-to-cf
             -convert-cf-to-llvm
@@ -107,10 +107,11 @@ ${BUCKYBALL_CONVERT_TILE_TO_BUCKYBALL}
 ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
           -llvm-request-c-wrappers
           ${BUCKYBALL_LOWER_BANK_SSA_TO_INTRINSICS}
-          -convert-trace-to-llvm="${RESNET18_TRACE_MODES}"
           -expand-strided-metadata
           -convert-linalg-to-loops
           ${BUCKYBALL_LOWER_BUCKYBALL}
+          -canonicalize
+          -cse
           -lower-affine
           -convert-scf-to-cf
           -convert-cf-to-llvm
@@ -123,8 +124,11 @@ ${BUCKYBALL_ASSIGN_PHYSICAL_BANKS}
           -finalize-memref-to-llvm
           -reconcile-unrealized-casts |
         ${BUDDY_BINARY_DIR}/buddy-translate --buddy-to-llvmir |
-        ${BUDDY_BINARY_DIR}/buddy-llc -filetype=obj -mtriple=riscv64 -O2 -mattr=${BUCKYBALL_RISCV_MATTR} -float-abi=hard -o subgraph0.o
+        ${BUDDY_BINARY_DIR}/buddy-llc -filetype=obj -mtriple=riscv64 -O0 -mattr=${BUCKYBALL_RISCV_MATTR} -float-abi=hard -o subgraph0.o
         DEPENDS ${MODEL_RESNET18_GENERATED_DIR}/subgraph0.mlir
+                ${BUDDY_BINARY_DIR}/buddy-opt
+                ${BUDDY_BINARY_DIR}/buddy-translate
+                ${BUDDY_BINARY_DIR}/buddy-llc
   COMMENT "Building subgraph0.o"
   VERBATIM)
 
@@ -153,8 +157,6 @@ add_custom_command(TARGET buddy-buckyball-resnet-run POST_BUILD
 
 add_custom_target(sync-buckyball-resnet-deps
   COMMAND ${CMAKE_COMMAND} -E make_directory ${RESNET18_OUTPUT_DIR}
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${RESNET18_OUTPUT_DIR}/trace/cycle
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${RESNET18_OUTPUT_DIR}/trace/tensor
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${MODEL_RESNET18_DIR}/images
           ${RESNET18_OUTPUT_DIR}/images
