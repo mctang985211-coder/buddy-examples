@@ -1,0 +1,219 @@
+//===- bertsmall-main.cpp --------------------------------------------------===//
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//===----------------------------------------------------------------------===//
+//
+// Model-side driver for the BertSmall (prajjwal1/bert-small) e2e workload.
+//
+// The signature below is the one emitted by import-bertsmall.py into
+// forward.mlir:
+//
+//   func.func @forward(%arg0: memref<<N>x f32>,    // packed float32 params
+//                      %arg1: memref<512xi64>,     // position_ids buffer
+//                      %arg2: memref<1x11xi64>,    // input_ids
+//                      %arg3: memref<1x11xi64>,    // token_type_ids
+//                      %arg4: memref<1x11xi64>)    // attention_mask
+//     -> memref<1x11x30522xf32>                    // masked-LM logits
+//
+// BERT takes a `token_type_ids` runtime input (the Bert precedent's driver
+// order). The fixed sentence and sequence length match
+// pytorch-bertsmall-mlm.py, so the complete logits tensor this driver writes
+// to `bertsmall_logits_f32.bin` can be checked with
+//
+//   python3 pytorch-bertsmall-mlm.py --check <dir>/bertsmall_logits_f32.bin
+//
+// Discrete expectation (fail-hard): the masked-LM head's per-position argmax
+// token id — the MLM analogue of the Bert precedent's argmax landing point —
+// must equal the ids measured from the canonical reference (recorded in
+// reference/reference_manifest.json); any mismatch returns 1.
+//
+//===----------------------------------------------------------------------===//
+
+#include <algorithm>
+#include <buddy/Core/Container.h>
+#include <buddy/LLM/TextContainer.h>
+#include <chrono>
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <numeric>
+#include <string>
+#include <vector>
+
+using namespace buddy;
+
+namespace {
+
+// Sizes of the AOT artifacts emitted by import-bertsmall.py.
+constexpr int64_t kFloat32Params = 28795194;
+constexpr int64_t kInt64Params = 512;
+constexpr int64_t kSeqLen = 11;
+constexpr int64_t kVocabSize = 30522;
+
+// The workload's fixed case; must stay in sync with the reference script.
+const std::string kSentence = "The quick brown fox jumps over the lazy dog";
+
+// Per-position argmax token ids of the canonical reference (the MLM landing
+// points pytorch-bertsmall-mlm.py commits into reference/reference_manifest.json).
+// Measured from the official implementation; hardcoded expectation.
+const int64_t kExpectedArgmaxIds[kSeqLen] = {
+    4419, 1996, 4248, 2829, 4419, 14523, 2058, 1996, 13971, 3899, 3899,
+};
+
+void loadBinary(const std::string &path, char *dest, std::streamsize bytes) {
+  std::ifstream file(path, std::ios::in | std::ios::binary);
+  if (!file.is_open()) {
+    std::string message = "Failed to open " + path;
+    if (std::filesystem::exists(path))
+      message += " (exists but unreadable)";
+    throw std::runtime_error(message);
+  }
+  file.read(dest, bytes);
+  if (!file)
+    throw std::runtime_error("Failed to read the whole file: " + path);
+}
+
+/// Predict the top-k vocabulary ids for one token position.
+std::vector<int64_t> topK(const float *row, int vocabSize, int k) {
+  std::vector<int64_t> ids(vocabSize);
+  std::iota(ids.begin(), ids.end(), 0);
+  std::sort(ids.begin(), ids.end(),
+            [&](int64_t a, int64_t b) { return row[a] > row[b]; });
+  ids.resize(k);
+  return ids;
+}
+
+/// Vocabulary lookup; the file is parsed once and owned by the instance.
+class Vocab {
+public:
+  explicit Vocab(const std::string &path) {
+    std::ifstream file(path);
+    if (!file.is_open())
+      throw std::runtime_error("Failed to open vocabulary: " + path);
+    tokens.reserve(kVocabSize);
+    std::string token;
+    while (std::getline(file, token)) {
+      while (!token.empty() && (token.back() == '\r' || token.back() == '\n'))
+        token.pop_back();
+      tokens.push_back(token);
+    }
+    if (tokens.size() != static_cast<size_t>(kVocabSize))
+      std::cerr << "[Warn] vocab has " << tokens.size() << " entries, expected "
+                << kVocabSize << std::endl;
+  }
+
+  const std::string &operator[](int64_t id) const {
+    static const std::string outOfBounds = "<oob>";
+    if (id < 0 || id >= static_cast<int64_t>(tokens.size()))
+      return outOfBounds;
+    return tokens[id];
+  }
+
+private:
+  std::vector<std::string> tokens;
+};
+
+} // namespace
+
+// Declare the BERT forward function generated by the buddy frontend.
+extern "C" void
+_mlir_ciface_forward(MemRef<float, 3> *result, MemRef<float, 1> *arg0,
+                     MemRef<long long, 1> *arg1, MemRef<long long, 2> *arg2,
+                     MemRef<long long, 2> *arg3, MemRef<long long, 2> *arg4);
+
+int main(int argc, char **argv) {
+  const std::string title = "BERT-small Inference Powered by Buddy Compiler";
+  std::cout << "\033[33;1m" << title << "\033[0m" << std::endl;
+
+  // Directory holding arg0.data, arg1.data and vocab.txt (import-bertsmall.py
+  // output). Override with the first CLI argument when running elsewhere.
+  std::string modelDir = argc > 1 ? argv[1] : "./";
+  if (!modelDir.empty() && modelDir.back() != '/')
+    modelDir += '/';
+  std::cout << "[Log] artifacts: " << modelDir << std::endl;
+
+  /// Load the packed parameters into MemRef containers.
+  MemRef<float, 1> params({kFloat32Params});
+  MemRef<long long, 1> positionIds({kInt64Params});
+  loadBinary(modelDir + "arg0.data", reinterpret_cast<char *>(params.getData()),
+             kFloat32Params * static_cast<int64_t>(sizeof(float)));
+  loadBinary(modelDir + "arg1.data",
+             reinterpret_cast<char *>(positionIds.getData()),
+             kInt64Params * static_cast<int64_t>(sizeof(long long)));
+  std::cout << "[Log] loaded " << kFloat32Params << " float32 + "
+            << kInt64Params << " int64 parameters" << std::endl;
+
+  /// Tokenize the fixed sentence with the WordPiece vocabulary.
+  Text<long long, 2> inputIds(kSentence);
+  inputIds.tokenizeBert(modelDir + "vocab.txt", kSeqLen);
+  // Single-sequence case: segment ids are all zero, attention sees every
+  // token, matching pytorch-bertsmall-mlm.py's fixed_inputs exactly.
+  MemRef<long long, 2> tokenTypeIds({1, kSeqLen}, 0LL);
+  MemRef<long long, 2> attentionMask({1, kSeqLen}, 1LL);
+
+  /// Execute forward inference of the model.
+  MemRef<float, 3> logits({1, kSeqLen, kVocabSize});
+  const auto inferenceStart = std::chrono::high_resolution_clock::now();
+  _mlir_ciface_forward(&logits, &params, &positionIds, &inputIds, &tokenTypeIds,
+                       &attentionMask);
+  const auto inferenceEnd = std::chrono::high_resolution_clock::now();
+  const std::chrono::duration<double, std::milli> inferenceTime =
+      inferenceEnd - inferenceStart;
+
+  /// Dump the *complete* output tensor so it can be compared element-wise with
+  /// the canonical reference, not only with its argmax.
+  const std::string outPath = modelDir + "bertsmall_logits_f32.bin";
+  {
+    std::ofstream out(outPath,
+                      std::ios::out | std::ios::binary | std::ios::trunc);
+    out.write(reinterpret_cast<const char *>(logits.getData()),
+              kSeqLen * kVocabSize * static_cast<int64_t>(sizeof(float)));
+    if (!out)
+      throw std::runtime_error("Failed to write " + outPath);
+  }
+
+  /// Report the per-position argmax landing points and fail hard when they
+  /// deviate from the canonical expectation.
+  const Vocab vocab(modelDir + "vocab.txt");
+  const float *data = logits.getData();
+  int mismatches = 0;
+  for (int64_t position = 0; position < kSeqLen; ++position) {
+    const float *row = data + position * kVocabSize;
+    const int64_t argmaxId = topK(row, kVocabSize, 1)[0];
+    std::cout << "[Result] pos " << position << ": argmax "
+              << vocab[argmaxId] << " (" << argmaxId << ", logit "
+              << row[argmaxId] << ")" << std::endl;
+    if (argmaxId != kExpectedArgmaxIds[position]) {
+      std::cerr << "\033[31;1m[Mismatch]\033[0m pos " << position
+                << ": got token id " << argmaxId << ", expected "
+                << kExpectedArgmaxIds[position] << std::endl;
+      ++mismatches;
+    }
+  }
+  if (mismatches != 0) {
+    std::cerr << "FAIL: " << mismatches << " of " << kSeqLen
+              << " argmax positions deviate from the canonical expectation"
+              << std::endl;
+    return 1;
+  }
+  std::cout << "PASS: all " << kSeqLen
+            << " per-position argmax ids match the canonical expectation"
+            << std::endl;
+
+  std::cout << "\033[33;1m[Time] \033[0m" << inferenceTime.count() << " ms"
+            << std::endl;
+  std::cout << "\033[33;1m[Log] \033[0mfull logits -> " << outPath << std::endl;
+  return 0;
+}

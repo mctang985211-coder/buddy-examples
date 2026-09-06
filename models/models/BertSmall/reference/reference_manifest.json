@@ -1,0 +1,391 @@
+{
+  "model_id": "prajjwal1/bert-small",
+  "sentence": "The quick brown fox jumps over the lazy dog",
+  "input_ids": [
+    101,
+    1996,
+    4248,
+    2829,
+    4419,
+    14523,
+    2058,
+    1996,
+    13971,
+    3899,
+    102
+  ],
+  "token_type_ids": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "attention_mask": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "device": "cpu",
+  "dtype": "float32",
+  "shape": [
+    1,
+    11,
+    30522
+  ],
+  "inference_seconds": 0.080716,
+  "logits_file": "bertsmall_mlm_logits_f32.bin",
+  "logits_sha256": "477af53e306c17a97ddc0a1842687dc675e5caf94a29ade96f8b492088851ee0",
+  "logits_bytes": 1342968,
+  "tolerance": {
+    "atol": 0.001,
+    "rtol": 0.001,
+    "metric": "np.allclose"
+  },
+  "top_k_per_position": [
+    {
+      "position": 0,
+      "top": [
+        {
+          "token_id": 4419,
+          "token": "fox",
+          "logit": 7.034048080444336
+        },
+        {
+          "token_id": 3899,
+          "token": "dog",
+          "logit": 6.533252716064453
+        },
+        {
+          "token_id": 2043,
+          "token": "when",
+          "logit": 5.751895904541016
+        },
+        {
+          "token_id": 2028,
+          "token": "one",
+          "logit": 5.627806186676025
+        },
+        {
+          "token_id": 1011,
+          "token": "-",
+          "logit": 5.586397171020508
+        }
+      ]
+    },
+    {
+      "position": 1,
+      "top": [
+        {
+          "token_id": 1996,
+          "token": "the",
+          "logit": 22.642990112304688
+        },
+        {
+          "token_id": 1037,
+          "token": "a",
+          "logit": 14.788247108459473
+        },
+        {
+          "token_id": 2028,
+          "token": "one",
+          "logit": 10.673625946044922
+        },
+        {
+          "token_id": 2010,
+          "token": "his",
+          "logit": 10.527120590209961
+        },
+        {
+          "token_id": 2008,
+          "token": "that",
+          "logit": 9.803193092346191
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "top": [
+        {
+          "token_id": 4248,
+          "token": "quick",
+          "logit": 13.052604675292969
+        },
+        {
+          "token_id": 2502,
+          "token": "big",
+          "logit": 12.033617973327637
+        },
+        {
+          "token_id": 2402,
+          "token": "young",
+          "logit": 11.006519317626953
+        },
+        {
+          "token_id": 2460,
+          "token": "short",
+          "logit": 10.326616287231445
+        },
+        {
+          "token_id": 5016,
+          "token": "giant",
+          "logit": 10.268404006958008
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "top": [
+        {
+          "token_id": 2829,
+          "token": "brown",
+          "logit": 21.53899574279785
+        },
+        {
+          "token_id": 2630,
+          "token": "blue",
+          "logit": 13.338846206665039
+        },
+        {
+          "token_id": 3756,
+          "token": "yellow",
+          "logit": 13.012463569641113
+        },
+        {
+          "token_id": 2665,
+          "token": "green",
+          "logit": 12.878612518310547
+        },
+        {
+          "token_id": 2417,
+          "token": "red",
+          "logit": 12.682450294494629
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "top": [
+        {
+          "token_id": 4419,
+          "token": "fox",
+          "logit": 19.829668045043945
+        },
+        {
+          "token_id": 3899,
+          "token": "dog",
+          "logit": 12.9572114944458
+        },
+        {
+          "token_id": 27681,
+          "token": "rooster",
+          "logit": 10.868420600891113
+        },
+        {
+          "token_id": 4937,
+          "token": "cat",
+          "logit": 10.73874282836914
+        },
+        {
+          "token_id": 29268,
+          "token": "weasel",
+          "logit": 10.663034439086914
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "top": [
+        {
+          "token_id": 14523,
+          "token": "jumps",
+          "logit": 24.052547454833984
+        },
+        {
+          "token_id": 29195,
+          "token": "leaps",
+          "logit": 14.109992980957031
+        },
+        {
+          "token_id": 10029,
+          "token": "flies",
+          "logit": 14.016386985778809
+        },
+        {
+          "token_id": 5376,
+          "token": "jump",
+          "logit": 13.821632385253906
+        },
+        {
+          "token_id": 4212,
+          "token": "falls",
+          "logit": 13.68802547454834
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "top": [
+        {
+          "token_id": 2058,
+          "token": "over",
+          "logit": 21.556114196777344
+        },
+        {
+          "token_id": 2105,
+          "token": "around",
+          "logit": 12.098899841308594
+        },
+        {
+          "token_id": 2006,
+          "token": "on",
+          "logit": 12.094175338745117
+        },
+        {
+          "token_id": 2682,
+          "token": "above",
+          "logit": 11.763437271118164
+        },
+        {
+          "token_id": 2408,
+          "token": "across",
+          "logit": 11.614828109741211
+        }
+      ]
+    },
+    {
+      "position": 7,
+      "top": [
+        {
+          "token_id": 1996,
+          "token": "the",
+          "logit": 21.518022537231445
+        },
+        {
+          "token_id": 1037,
+          "token": "a",
+          "logit": 15.518499374389648
+        },
+        {
+          "token_id": 2010,
+          "token": "his",
+          "logit": 14.382763862609863
+        },
+        {
+          "token_id": 2014,
+          "token": "her",
+          "logit": 11.836136817932129
+        },
+        {
+          "token_id": 2008,
+          "token": "that",
+          "logit": 10.834522247314453
+        }
+      ]
+    },
+    {
+      "position": 8,
+      "top": [
+        {
+          "token_id": 13971,
+          "token": "lazy",
+          "logit": 14.794353485107422
+        },
+        {
+          "token_id": 2210,
+          "token": "little",
+          "logit": 9.173826217651367
+        },
+        {
+          "token_id": 2502,
+          "token": "big",
+          "logit": 8.675312042236328
+        },
+        {
+          "token_id": 2980,
+          "token": "hot",
+          "logit": 8.163169860839844
+        },
+        {
+          "token_id": 2214,
+          "token": "old",
+          "logit": 7.881625175476074
+        }
+      ]
+    },
+    {
+      "position": 9,
+      "top": [
+        {
+          "token_id": 3899,
+          "token": "dog",
+          "logit": 13.912740707397461
+        },
+        {
+          "token_id": 1012,
+          "token": ".",
+          "logit": 11.343330383300781
+        },
+        {
+          "token_id": 3586,
+          "token": "horse",
+          "logit": 9.452796936035156
+        },
+        {
+          "token_id": 1025,
+          "token": ";",
+          "logit": 8.840180397033691
+        },
+        {
+          "token_id": 6077,
+          "token": "dogs",
+          "logit": 8.670909881591797
+        }
+      ]
+    },
+    {
+      "position": 10,
+      "top": [
+        {
+          "token_id": 3899,
+          "token": "dog",
+          "logit": 6.568632125854492
+        },
+        {
+          "token_id": 1998,
+          "token": "and",
+          "logit": 5.950424671173096
+        },
+        {
+          "token_id": 4419,
+          "token": "fox",
+          "logit": 5.6682024002075195
+        },
+        {
+          "token_id": 13971,
+          "token": "lazy",
+          "logit": 5.2545576095581055
+        },
+        {
+          "token_id": 1011,
+          "token": "-",
+          "logit": 5.229575157165527
+        }
+      ]
+    }
+  ]
+}
