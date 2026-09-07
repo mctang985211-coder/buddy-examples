@@ -7,6 +7,7 @@ set(MODEL_WHISPER_DIR ${MODEL_DIR}/Whisper)
 set(MODEL_STABLEDIFFUSION_DIR ${MODEL_DIR}/StableDiffusion)
 set(MODEL_LLAMA2_DIR ${MODEL_DIR}/llama2)
 set(MODEL_QWEN3_DIR ${MODEL_DIR}/Qwen3)
+set(MODEL_PYTHIA_DIR ${MODEL_DIR}/Pythia)
 set(MODEL_YOLO26_DIR ${MODEL_DIR}/YOLO26)
 set(MODEL_BUDDYNEXT_DIR ${MODEL_DIR}/BuddyNext)
 set(MODEL_GEMMA4_DIR ${MODEL_DIR}/Gemma4)
@@ -50,6 +51,10 @@ endif()
 
 if (MODEL_QWEN3)
   add_subdirectory(Qwen3)
+endif()
+
+if (MODEL_PYTHIA)
+  add_subdirectory(Pythia)
 endif()
 
 if (MODEL_YOLO26)
