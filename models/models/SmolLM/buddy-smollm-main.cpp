@@ -1,0 +1,218 @@
+//===- buddy-smollm-main.cpp ---------------------------------------------===//
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//===----------------------------------------------------------------------===//
+//
+// Model-side driver for the SmolLM (HuggingFaceTB/SmolLM-135M) e2e workload.
+//
+// The signature below is the one emitted by import-smollm.py into
+// forward.mlir:
+//
+//   func.func @forward(%arg0: memref<134515040xf32>, // packed float32 params
+//                      %arg1: memref<1x16xi64>)      // input_ids
+//     -> memref<1x16x49152xf32>                      // next-token logits
+//
+// SmolLM-135M is LlamaForCausalLM (model_type=llama) with a GPT-2-style
+// byte-level BPE tokenizer, which buddy's TextContainer does not implement;
+// the fixed input ids below are therefore the ids measured from the official
+// tokenizer (see reference/reference_manifest.json) rather than a C++
+// tokenization of the sentence. The complete logits tensor this driver writes
+// to `smollm_driver_logits_f32.bin` (distinct from the canonical
+// reference/smollm_logits_f32.bin) can be checked with
+//
+//   python3 smollm-ppl.py --check <dir>/smollm_driver_logits_f32.bin
+//
+// Discrete expectation (fail-hard): the causal-LM head's per-position argmax
+// token id must equal the ids measured from the canonical reference (recorded
+// in reference/reference_manifest.json); any mismatch returns 1.
+//
+//===----------------------------------------------------------------------===//
+
+#include <algorithm>
+#include <buddy/Core/Container.h>
+#include <buddy/LLM/TextContainer.h>
+#include <chrono>
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <numeric>
+#include <string>
+#include <vector>
+
+using namespace buddy;
+
+namespace {
+
+// Sizes of the AOT artifacts emitted by import-smollm.py: 134,515,008
+// float32 trainable parameters (tied embeddings counted once) plus the
+// 32-float32 rotary inv_freq buffer, one concatenated blob.
+constexpr int64_t kFloat32Params = 134515040;
+constexpr int64_t kSeqLen = 16;
+constexpr int64_t kVocabSize = 49152;
+
+// The workload's fixed case; must stay in sync with smollm-ppl.py / the
+// reference manifest: "Once upon a time there was a little girl who lived in
+// a small village." tokenized by the official SmolLM GPT-2 BPE tokenizer
+// (16 ids).
+const int64_t kInputTokenIds[kSeqLen] = {
+    6403, 1980, 253, 655, 665, 436, 253, 1838,
+    8180, 617,  4161, 281, 253, 1165, 6560, 30,
+};
+
+// Per-position argmax token ids of the canonical reference (measured from the
+// official fp32 implementation; recorded in reference/reference_manifest.json).
+// Hardcoded expectation.
+const int64_t kExpectedArgmaxIds[kSeqLen] = {
+    346,  253,  655,  28,  436, 253,  7436, 8180,
+    3365, 5732, 281,  253, 18840, 6560, 1217, 2306,
+};
+
+void loadBinary(const std::string &path, char *dest, std::streamsize bytes) {
+  std::ifstream file(path, std::ios::in | std::ios::binary);
+  if (!file.is_open()) {
+    std::string message = "Failed to open " + path;
+    if (std::filesystem::exists(path))
+      message += " (exists but unreadable)";
+    throw std::runtime_error(message);
+  }
+  file.read(dest, bytes);
+  if (!file)
+    throw std::runtime_error("Failed to read the whole file: " + path);
+}
+
+/// Predict the top-k vocabulary ids for one token position.
+std::vector<int64_t> topK(const float *row, int vocabSize, int k) {
+  std::vector<int64_t> ids(vocabSize);
+  std::iota(ids.begin(), ids.end(), 0);
+  std::sort(ids.begin(), ids.end(),
+            [&](int64_t a, int64_t b) { return row[a] > row[b]; });
+  ids.resize(k);
+  return ids;
+}
+
+/// Vocabulary lookup; the file is parsed once and owned by the instance.
+class Vocab {
+public:
+  explicit Vocab(const std::string &path) {
+    std::ifstream file(path);
+    if (!file.is_open())
+      throw std::runtime_error("Failed to open vocabulary: " + path);
+    tokens.reserve(kVocabSize);
+    std::string token;
+    while (std::getline(file, token)) {
+      while (!token.empty() && (token.back() == '\r' || token.back() == '\n'))
+        token.pop_back();
+      tokens.push_back(token);
+    }
+    if (tokens.size() != static_cast<size_t>(kVocabSize))
+      std::cerr << "[Warn] vocab has " << tokens.size() << " entries, expected "
+                << kVocabSize << std::endl;
+  }
+
+  const std::string &operator[](int64_t id) const {
+    static const std::string outOfBounds = "<oob>";
+    if (id < 0 || id >= static_cast<int64_t>(tokens.size()))
+      return outOfBounds;
+    return tokens[id];
+  }
+
+private:
+  std::vector<std::string> tokens;
+};
+
+} // namespace
+
+// Declare the SmolLM forward function generated by the buddy frontend.
+extern "C" void _mlir_ciface_forward(MemRef<float, 3> *result,
+                                     MemRef<float, 1> *arg0,
+                                     MemRef<long long, 2> *arg1);
+
+int main(int argc, char **argv) {
+  const std::string title = "SmolLM-135M Inference Powered by Buddy Compiler";
+  std::cout << "\033[33;1m" << title << "\033[0m" << std::endl;
+
+  // Directory holding arg0.data and vocab.txt (import-smollm.py output).
+  // Override with the first CLI argument when running elsewhere.
+  std::string modelDir = argc > 1 ? argv[1] : "./";
+  if (!modelDir.empty() && modelDir.back() != '/')
+    modelDir += '/';
+  std::cout << "[Log] artifacts: " << modelDir << std::endl;
+
+  /// Load the packed parameters into MemRef containers.
+  MemRef<float, 1> params({kFloat32Params});
+  loadBinary(modelDir + "arg0.data", reinterpret_cast<char *>(params.getData()),
+             kFloat32Params * static_cast<int64_t>(sizeof(float)));
+  std::cout << "[Log] loaded " << kFloat32Params << " float32 parameters"
+            << std::endl;
+
+  /// Feed the fixed input ids (measured from the official tokenizer; there is
+  /// no C++ byte-level BPE tokenizer for SmolLM in buddy's TextContainer).
+  MemRef<long long, 2> inputIds({1, kSeqLen});
+  for (int64_t i = 0; i < kSeqLen; ++i)
+    inputIds.getData()[i] = kInputTokenIds[i];
+
+  /// Execute forward inference of the model.
+  MemRef<float, 3> logits({1, kSeqLen, kVocabSize});
+  const auto inferenceStart = std::chrono::high_resolution_clock::now();
+  _mlir_ciface_forward(&logits, &params, &inputIds);
+  const auto inferenceEnd = std::chrono::high_resolution_clock::now();
+  const std::chrono::duration<double, std::milli> inferenceTime =
+      inferenceEnd - inferenceStart;
+
+  /// Dump the *complete* output tensor so it can be compared element-wise with
+  /// the canonical reference, not only with its argmax.
+  const std::string outPath = modelDir + "smollm_driver_logits_f32.bin";
+  {
+    std::ofstream out(outPath,
+                      std::ios::out | std::ios::binary | std::ios::trunc);
+    out.write(reinterpret_cast<const char *>(logits.getData()),
+              kSeqLen * kVocabSize * static_cast<int64_t>(sizeof(float)));
+    if (!out)
+      throw std::runtime_error("Failed to write " + outPath);
+  }
+
+  /// Report the per-position argmax landing points and fail hard when they
+  /// deviate from the canonical expectation.
+  const Vocab vocab(modelDir + "vocab.txt");
+  const float *data = logits.getData();
+  int mismatches = 0;
+  for (int64_t position = 0; position < kSeqLen; ++position) {
+    const float *row = data + position * kVocabSize;
+    const int64_t argmaxId = topK(row, kVocabSize, 1)[0];
+    std::cout << "[Result] pos " << position << ": argmax "
+              << vocab[argmaxId] << " (" << argmaxId << ", logit "
+              << row[argmaxId] << ")" << std::endl;
+    if (argmaxId != kExpectedArgmaxIds[position]) {
+      std::cerr << "\033[31;1m[Mismatch]\033[0m pos " << position
+                << ": got token id " << argmaxId << ", expected "
+                << kExpectedArgmaxIds[position] << std::endl;
+      ++mismatches;
+    }
+  }
+  if (mismatches != 0) {
+    std::cerr << "FAIL: " << mismatches << " of " << kSeqLen
+              << " argmax positions deviate from the canonical expectation"
+              << std::endl;
+    return 1;
+  }
+  std::cout << "PASS: all " << kSeqLen
+            << " per-position argmax ids match the canonical expectation"
+            << std::endl;
+
+  std::cout << "\033[33;1m[Time] \033[0m" << inferenceTime.count() << " ms"
+            << std::endl;
+  std::cout << "\033[33;1m[Log] \033[0mfull logits -> " << outPath << std::endl;
+  return 0;
+}

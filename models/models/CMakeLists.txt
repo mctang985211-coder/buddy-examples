@@ -15,6 +15,7 @@ set(MODEL_MINIMAX_H3_FL2VA_DIR ${MODEL_DIR}/MiniMaxH3FL2VA)
 set(MODEL_MINIMAX_H3_REF2VA_DIR ${MODEL_DIR}/MiniMaxH3Ref2VA)
 set(MODEL_BERTSMALL_DIR ${MODEL_DIR}/BertSmall)
 set(MODEL_BERTMEDIUM_DIR ${MODEL_DIR}/BertMedium)
+set(MODEL_SMOLLM_DIR ${MODEL_DIR}/SmolLM)
 
 # Conditionally add model subdirectories based on MODEL_* flags
 if (MODEL_LENET)
@@ -83,4 +84,8 @@ endif()
 
 if (MODEL_BERTMEDIUM)
   add_subdirectory(BertMedium)
+endif()
+
+if (MODEL_SMOLLM)
+  add_subdirectory(SmolLM)
 endif()
