@@ -1,0 +1,525 @@
+{
+  "model_id": "HuggingFaceTB/SmolLM2-135M",
+  "text": "Once upon a time there was a little girl who lived in a small village.",
+  "input_ids": [
+    6403,
+    1980,
+    253,
+    655,
+    665,
+    436,
+    253,
+    1838,
+    8180,
+    617,
+    4161,
+    281,
+    253,
+    1165,
+    6560,
+    30
+  ],
+  "device": "cpu",
+  "dtype": "float32",
+  "shape": [
+    1,
+    16,
+    49152
+  ],
+  "causal_ppl": 5.052739,
+  "inference_seconds": 0.037332,
+  "logits_file": "smollm2_logits_f32.bin",
+  "logits_sha256": "58983c9054aab21a30063fc10450777c1b056323e76fbbd9be5d5d7c0c745f1c",
+  "logits_bytes": 3145728,
+  "tolerance": {
+    "atol": 0.001,
+    "rtol": 0.001,
+    "metric": "np.allclose"
+  },
+  "ppl_tolerance": {
+    "atol": 0.05,
+    "metric": "abs(causal_ppl - expected)"
+  },
+  "top_k_per_position": [
+    {
+      "position": 0,
+      "top": [
+        {
+          "token_id": 346,
+          "token": "\u0120you",
+          "logit": 26.39043617248535
+        },
+        {
+          "token_id": 260,
+          "token": "\u0120the",
+          "logit": 25.930530548095703
+        },
+        {
+          "token_id": 357,
+          "token": "\u0120it",
+          "logit": 25.242839813232422
+        },
+        {
+          "token_id": 469,
+          "token": "\u0120your",
+          "logit": 25.199256896972656
+        },
+        {
+          "token_id": 384,
+          "token": "\u0120he",
+          "logit": 24.813350677490234
+        }
+      ]
+    },
+    {
+      "position": 1,
+      "top": [
+        {
+          "token_id": 253,
+          "token": "\u0120a",
+          "logit": 21.426958084106445
+        },
+        {
+          "token_id": 354,
+          "token": "\u0120an",
+          "logit": 15.71835708618164
+        },
+        {
+          "token_id": 260,
+          "token": "\u0120the",
+          "logit": 14.394964218139648
+        },
+        {
+          "token_id": 28,
+          "token": ",",
+          "logit": 14.271450996398926
+        },
+        {
+          "token_id": 1243,
+          "token": "\u0120aw",
+          "logit": 13.067352294921875
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "top": [
+        {
+          "token_id": 655,
+          "token": "\u0120time",
+          "logit": 15.252093315124512
+        },
+        {
+          "token_id": 5885,
+          "token": "\u0120Time",
+          "logit": 11.45234489440918
+        },
+        {
+          "token_id": 5814,
+          "token": "\u0120sudden",
+          "logit": 10.753145217895508
+        },
+        {
+          "token_id": 979,
+          "token": "\u0120while",
+          "logit": 10.611418724060059
+        },
+        {
+          "token_id": 5738,
+          "token": "\u0120morning",
+          "logit": 10.42575454711914
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "top": [
+        {
+          "token_id": 28,
+          "token": ",",
+          "logit": 22.531227111816406
+        },
+        {
+          "token_id": 281,
+          "token": "\u0120in",
+          "logit": 21.058059692382812
+        },
+        {
+          "token_id": 665,
+          "token": "\u0120there",
+          "logit": 19.20925521850586
+        },
+        {
+          "token_id": 335,
+          "token": "\u0120on",
+          "logit": 17.19652557373047
+        },
+        {
+          "token_id": 981,
+          "token": "\u0120during",
+          "logit": 17.058368682861328
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "top": [
+        {
+          "token_id": 436,
+          "token": "\u0120was",
+          "logit": 27.09213638305664
+        },
+        {
+          "token_id": 4161,
+          "token": "\u0120lived",
+          "logit": 26.410900115966797
+        },
+        {
+          "token_id": 592,
+          "token": "\u0120were",
+          "logit": 25.548234939575195
+        },
+        {
+          "token_id": 28,
+          "token": ",",
+          "logit": 22.062366485595703
+        },
+        {
+          "token_id": 2268,
+          "token": "\u0120once",
+          "logit": 21.5201358795166
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "top": [
+        {
+          "token_id": 253,
+          "token": "\u0120a",
+          "logit": 13.9649076461792
+        },
+        {
+          "token_id": 354,
+          "token": "\u0120an",
+          "logit": 10.32758903503418
+        },
+        {
+          "token_id": 451,
+          "token": "\u0120this",
+          "logit": 8.799163818359375
+        },
+        {
+          "token_id": 2268,
+          "token": "\u0120once",
+          "logit": 8.448110580444336
+        },
+        {
+          "token_id": 1372,
+          "token": "\u0120another",
+          "logit": 7.434141635894775
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "top": [
+        {
+          "token_id": 1838,
+          "token": "\u0120little",
+          "logit": 14.911949157714844
+        },
+        {
+          "token_id": 9357,
+          "token": "\u0120wise",
+          "logit": 14.491554260253906
+        },
+        {
+          "token_id": 555,
+          "token": "\u0120man",
+          "logit": 14.108255386352539
+        },
+        {
+          "token_id": 7436,
+          "token": "\u0120curious",
+          "logit": 13.987411499023438
+        },
+        {
+          "token_id": 1528,
+          "token": "\u0120group",
+          "logit": 13.801478385925293
+        }
+      ]
+    },
+    {
+      "position": 7,
+      "top": [
+        {
+          "token_id": 8180,
+          "token": "\u0120girl",
+          "logit": 17.671730041503906
+        },
+        {
+          "token_id": 7706,
+          "token": "\u0120boy",
+          "logit": 16.08585548400879
+        },
+        {
+          "token_id": 3102,
+          "token": "\u0120town",
+          "logit": 14.612374305725098
+        },
+        {
+          "token_id": 6560,
+          "token": "\u0120village",
+          "logit": 14.23716926574707
+        },
+        {
+          "token_id": 41172,
+          "token": "\u0120bunny",
+          "logit": 14.19891357421875
+        }
+      ]
+    },
+    {
+      "position": 8,
+      "top": [
+        {
+          "token_id": 3365,
+          "token": "\u0120named",
+          "logit": 23.478416442871094
+        },
+        {
+          "token_id": 617,
+          "token": "\u0120who",
+          "logit": 18.378023147583008
+        },
+        {
+          "token_id": 1217,
+          "token": "\u0120called",
+          "logit": 17.427005767822266
+        },
+        {
+          "token_id": 411,
+          "token": "\u0120by",
+          "logit": 16.291156768798828
+        },
+        {
+          "token_id": 28,
+          "token": ",",
+          "logit": 15.916677474975586
+        }
+      ]
+    },
+    {
+      "position": 9,
+      "top": [
+        {
+          "token_id": 4161,
+          "token": "\u0120lived",
+          "logit": 24.177595138549805
+        },
+        {
+          "token_id": 5732,
+          "token": "\u0120loved",
+          "logit": 23.958778381347656
+        },
+        {
+          "token_id": 761,
+          "token": "\u0120had",
+          "logit": 22.63652801513672
+        },
+        {
+          "token_id": 436,
+          "token": "\u0120was",
+          "logit": 21.410390853881836
+        },
+        {
+          "token_id": 4146,
+          "token": "\u0120wanted",
+          "logit": 20.8264102935791
+        }
+      ]
+    },
+    {
+      "position": 10,
+      "top": [
+        {
+          "token_id": 281,
+          "token": "\u0120in",
+          "logit": 21.062633514404297
+        },
+        {
+          "token_id": 351,
+          "token": "\u0120with",
+          "logit": 20.35416030883789
+        },
+        {
+          "token_id": 2141,
+          "token": "\u0120near",
+          "logit": 19.524431228637695
+        },
+        {
+          "token_id": 335,
+          "token": "\u0120on",
+          "logit": 18.881263732910156
+        },
+        {
+          "token_id": 411,
+          "token": "\u0120by",
+          "logit": 17.748058319091797
+        }
+      ]
+    },
+    {
+      "position": 11,
+      "top": [
+        {
+          "token_id": 253,
+          "token": "\u0120a",
+          "logit": 7.837563514709473
+        },
+        {
+          "token_id": 260,
+          "token": "\u0120the",
+          "logit": 4.633584976196289
+        },
+        {
+          "token_id": 354,
+          "token": "\u0120an",
+          "logit": 2.7638587951660156
+        },
+        {
+          "token_id": 1315,
+          "token": "\u0120New",
+          "logit": 2.333481788635254
+        },
+        {
+          "token_id": 3996,
+          "token": "\u0120England",
+          "logit": 2.072784185409546
+        }
+      ]
+    },
+    {
+      "position": 12,
+      "top": [
+        {
+          "token_id": 1165,
+          "token": "\u0120small",
+          "logit": 16.107465744018555
+        },
+        {
+          "token_id": 2066,
+          "token": "\u0120big",
+          "logit": 15.957866668701172
+        },
+        {
+          "token_id": 18840,
+          "token": "\u0120cozy",
+          "logit": 15.934296607971191
+        },
+        {
+          "token_id": 6560,
+          "token": "\u0120village",
+          "logit": 15.532445907592773
+        },
+        {
+          "token_id": 3953,
+          "token": "\u0120beautiful",
+          "logit": 15.149171829223633
+        }
+      ]
+    },
+    {
+      "position": 13,
+      "top": [
+        {
+          "token_id": 6560,
+          "token": "\u0120village",
+          "logit": 17.532344818115234
+        },
+        {
+          "token_id": 3102,
+          "token": "\u0120town",
+          "logit": 17.324234008789062
+        },
+        {
+          "token_id": 1798,
+          "token": "\u0120country",
+          "logit": 12.464375495910645
+        },
+        {
+          "token_id": 2291,
+          "token": "\u0120house",
+          "logit": 12.437618255615234
+        },
+        {
+          "token_id": 2240,
+          "token": "\u0120city",
+          "logit": 12.294098854064941
+        }
+      ]
+    },
+    {
+      "position": 14,
+      "top": [
+        {
+          "token_id": 281,
+          "token": "\u0120in",
+          "logit": 23.279035568237305
+        },
+        {
+          "token_id": 10000,
+          "token": "\u0120surrounded",
+          "logit": 23.213878631591797
+        },
+        {
+          "token_id": 30,
+          "token": ".",
+          "logit": 23.116514205932617
+        },
+        {
+          "token_id": 1217,
+          "token": "\u0120called",
+          "logit": 22.76466178894043
+        },
+        {
+          "token_id": 2141,
+          "token": "\u0120near",
+          "logit": 22.604021072387695
+        }
+      ]
+    },
+    {
+      "position": 15,
+      "top": [
+        {
+          "token_id": 2306,
+          "token": "\u0120She",
+          "logit": 7.556786060333252
+        },
+        {
+          "token_id": 3488,
+          "token": "\u0120Her",
+          "logit": 5.891595363616943
+        },
+        {
+          "token_id": 1963,
+          "token": "\u0120One",
+          "logit": 4.731821060180664
+        },
+        {
+          "token_id": 5081,
+          "token": "\u0120Every",
+          "logit": 4.52376651763916
+        },
+        {
+          "token_id": 378,
+          "token": "\u0120The",
+          "logit": 4.303624153137207
+        }
+      ]
+    }
+  ]
+}
